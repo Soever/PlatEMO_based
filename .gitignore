@@ -31,3 +31,7 @@ codegen/
 
 # Cloud based storage dotfile
 .MATLABDriveTag
+
+.gitattributes
+.gitignore
+PlatEMO_based.prj
