@@ -43,14 +43,15 @@ classdef SnakeOptimizer < ALGORITHM
                 if Q>1        Q=1;    end
                 if Q<Threshold
                     %雄性探索
-                    Xnewm = so_exploration(Nm,dim,Xm,fitness_m,C2,Xnewm,ub,lb);
-                    Xnewf = so_exploration(Nf,dim,Xf,fitness_m,C2,Xnewf,ub,lb);
+                    Xnewm = so_exploration(Nm,dim,Xm,C2,ub,lb);
+                    Xnewf = so_exploration(Nf,dim,Xf,C2,ub,lb);
+
                 else %Exploitation Phase (Food Exists)
                     if Temp>Thresold2  %hot
-                        Xnewm =so_exploitation_food_hot(Nm,dim,Xfood,C3,Temp,Xnewm);
-                        Xnewf =so_exploitation_food_hot(Nf,dim,Xfood,C3,Temp,Xnewf);
+                        Xnewm =so_exploitation_food_hot(Nm,dim,Xfood,C3,Temp,Xm);
+                        Xnewf =so_exploitation_food_hot(Nf,dim,Xfood,C3,Temp,Xf);
                     else %cold
-                       [Xnewm,Xnewf] = so_exploitation_food_cold(Nm,Nf,dim,fitnessBest_m,fitnessBest_f,fitness_m,fitness_f,C3,Q,Xbest_m,Xbest_f,Xnewm,Xnewf,lb,ub);
+                       [Xnewm,Xnewf] = so_exploitation_food_cold(Nm,Nf,dim,fitnessBest_m,fitnessBest_f,fitness_m,fitness_f,C3,Q,Xbest_m,Xbest_f,Xm,Xf,lb,ub);
                     end
                 end
 
