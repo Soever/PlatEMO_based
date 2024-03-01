@@ -29,8 +29,10 @@ classdef SnakeOptimizer_random < ALGORITHM
             [fitnessBest_f, gbest2] = min(fitness_f);
             Xbest_f = Xf(gbest2);
             t=0 ;
-            X_personal = X ;
+         
             result_t(1)=GYbest;
+            X_personalbest = X ;
+            t2_count =0 ;
             while Algorithm.NotTerminated(X)
             %   
                 t = t+1 ;
@@ -44,6 +46,12 @@ classdef SnakeOptimizer_random < ALGORITHM
                     Xnewm = so_exploration(Nm,dim,Xm,C2,ub,lb);
                     Xnewf = so_exploration(Nf,dim,Xf,C2,ub,lb);
                 else %Exploitation Phase (Food Exists)
+                    if t2_count ==0 
+                        X = X_personalbest ;
+                        Xm=X(1:Nm);
+                        Xf=X(Nm+1:N);
+                        t2_count = t2_count+1 ;
+                    end
                     if Temp>Thresold2  %hot
                         Xnewm =so_exploitation_food_hot(Nm,dim,Xfood,C3,Temp,Xm);
                         Xnewf =so_exploitation_food_hot(Nf,dim,Xfood,C3,Temp,Xf);
@@ -61,6 +69,14 @@ classdef SnakeOptimizer_random < ALGORITHM
                     
                     Xm = Xnewm ;
                     Xf = Xnewf ;
+                    X(1:Nm) = Xm ;
+                    X(Nm+1:Nf) = Xf ;
+                    for ii = 1:N
+                        if X(ii).obj < X_personalbest(ii).obj
+                            X_personalbest(ii) = X(ii) ;
+                        end
+                    end
+
                 else
                     %更新雄性种群
                     for j=1:Nm
