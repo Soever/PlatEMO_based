@@ -70,7 +70,7 @@ classdef SnakeOptimizer_random < ALGORITHM
                     Xm = Xnewm ;
                     Xf = Xnewf ;
                     X(1:Nm) = Xm ;
-                    X(Nm+1:Nf) = Xf ;
+                    X(Nm+1:N) = Xf ;
                     for ii = 1:N
                         if X(ii).obj < X_personalbest(ii).obj
                             X_personalbest(ii) = X(ii) ;

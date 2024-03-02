@@ -32,12 +32,14 @@ maxIteration = 500 ;runs = 30 ;n_func = 10 ;
 %     end
 % end
 
-rng(2024);
+rng(2025);
 
 %platemo('problem',@CEC2017_F4,'algorithm',@GA,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_random,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_random2,'N',N,'D',D,'maxFE',15000);
+%platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer,'N',N,'D',D,'maxFE',15000);
+platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_pro,'N',N,'D',D,'maxFE',15000);
+
+% platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_random,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_random2,'N',N,'D',D,'maxFE',15000);
 
 
 % 
