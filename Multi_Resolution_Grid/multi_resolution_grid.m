@@ -1,9 +1,7 @@
 function REP = multi_resolution_grid(PopObj,N,div1,div2)
-
     %非支配解的个数
     NoP = size(PopObj,1);
     m = size(PopObj,2);
-    
     %% Calculate the grid location of each solution
     fmax = max(PopObj,[],1);
     fmin = min(PopObj,[],1);
@@ -25,6 +23,7 @@ function REP = multi_resolution_grid(PopObj,N,div1,div2)
     max_CrowdG_idx = find(CrowdG==max_CrowdG) ;
    
     %% 找到第i种格子对应的个体
+    % 如果只有一种粗分辨率格子的拥挤度最大，则删除该格子的最大GCPD值个体
     if length(max_CrowdG_idx) == 1
         pop_index  = find(Site==max_CrowdG_idx);
         pop_num  = length(pop_index) ;
@@ -35,8 +34,7 @@ function REP = multi_resolution_grid(PopObj,N,div1,div2)
             GCPD(j)=cal_GCPD(m,PopObj(k,:),grid_lb_coarse(k,:),d_coarse(k,:),GLoc_coarse(k,:));
         end
         pop_delete = pop_index(find(GCPD==max(GCPD)));
-
-    else
+    else%如果有多个粗分辨率格子，则对这些格子进行细分
         for i= 1:length(max_CrowdG_idx)
             pop_index  = find(Site==max_CrowdG_idx(i));
             pop_num  = length(pop_index) ;

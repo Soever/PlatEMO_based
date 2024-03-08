@@ -2,6 +2,9 @@ classdef SnakeOptimizer < ALGORITHM
     methods
         function main(Algorithm,Problem)
             global result_t ;
+
+            [Threshold,Thresold2,C1,C2,C3] = Algorithm.ParameterSet(0.25,0.6,0.5,0.05,2);
+
             %% Parameter setting
             N = Problem.N;  % Population size
             Nm=round(N/2);
@@ -13,11 +16,7 @@ classdef SnakeOptimizer < ALGORITHM
             ub = Problem.upper;  % 上界
 
             vec_flag = [1, -1];
-            Threshold = 0.25;
-            Thresold2 = 0.6;
-            C1 = 0.5;
-            C2 = 0.05;
-            C3 = 2;
+
             X = Problem.Initialization();
             fitness = X.objs ;
             [GYbest, gbest] = min(fitness);

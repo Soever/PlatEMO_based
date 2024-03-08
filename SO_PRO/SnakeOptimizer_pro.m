@@ -20,6 +20,7 @@ classdef SnakeOptimizer_pro < ALGORITHM
             C3 = 2;
             RR = 0.7 ;
             X = Problem.Initialization();
+            
             for i = 1:N
                 Schedule(i,1:dim) = unifrnd(0.9,1,1,dim);
             end

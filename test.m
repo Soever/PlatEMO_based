@@ -1,10 +1,39 @@
 clc
 clear
-
-
-
-N = 150 ;D = 2 ;
+N = 100 ;D = 2 ;
 maxIteration = 1000 ;runs = 30 ;n_func = 10 ;
+maxFE = maxIteration*N ;
+
+func_handles = get_benchmark_func("ALL");
+
+global result_t ;
+al_handles={
+    {@SnakeOptimizer,0.15,0.6,0.5,0.05,2};
+    {@SnakeOptimizer,0.2,0.6,0.5,0.05,2};
+    {@SnakeOptimizer,0.25,0.6,0.5,0.05,2};
+    {@SnakeOptimizer,0.3,0.6,0.5,0.05,2};
+    {@SnakeOptimizer,0.35,0.6,0.5,0.05,2};
+};
+obj_min= zeros(length(al_handles),n_func,runs);
+best = zeros(length(al_handles),n_func,runs);
+
+
+for i =1:length(al_handles)
+    parfor j = 1:length(func_handles)
+        for k = 1:10
+            al =al_handles{i} ;
+            func = func_handles{j} ;
+            [~,obj,~] = platemo('problem',func,'algorithm',al,'N',N,'maxFE',maxFE);
+            if i == 1 %SO通过全局变量result_t记录
+                best(i,j,k) = result_t(end);
+            end
+            obj_min(i,j,k) = min(obj);
+        end
+    end
+end
+
+
+
 % al_handles = {@SnakeOptimizer,@GA,@DE,@PSO};
 % maxFE = maxIteration*N ; 
 % for i = 1:n_func
@@ -37,7 +66,7 @@ rng(2024);
 %platemo('problem',@CEC2017_F4,'algorithm',@GA,'N',N,'D',D,'maxFE',15000);
 %platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer,'N',N,'D',D,'maxFE',15000);
 %platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_pro,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@ZDT1,'algorithm',@MRPSO,'N',N,'D',D,'maxFE',15000);
+%platemo('problem',@ZDT1,'algorithm',@MRPSO,'N',N,'D',D,'maxFE',15000);
 % platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_random,'N',N,'D',D,'maxFE',15000);
 % platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_random2,'N',N,'D',D,'maxFE',15000);
 
