@@ -6,14 +6,27 @@ maxFE = maxIteration*N ;
 
 func_handles = get_benchmark_func("ALL");
 
+Tc = {0.4,0.5,0.6,0.7,0.8,0.9};
+Pc = {1.2,1.5,1.8,2,2.3,2.6} ;
+al_handles = {} ;
+for i = 1:length(Tc)
+    for j = i:length(Pc)
+        al_handles{end+1} = {@SnakeOptimizer,Pc{j},Tc{i},0.05,2};
+    end
+end
+
+
 global result_t ;
-al_handles={
-    {@SnakeOptimizer,0.15,0.6,0.5,0.05,2};
-    {@SnakeOptimizer,0.2,0.6,0.5,0.05,2};
-    {@SnakeOptimizer,0.25,0.6,0.5,0.05,2};
-    {@SnakeOptimizer,0.3,0.6,0.5,0.05,2};
-    {@SnakeOptimizer,0.35,0.6,0.5,0.05,2};
-};
+% al_handles={
+%     {@SnakeOptimizer,0.15,0.6,0.5,0.05,2};
+%     {@SnakeOptimizer,0.2,0.6,0.5,0.05,2};
+%     {@SnakeOptimizer,0.25,0.6,0.5,0.05,2};
+%     {@SnakeOptimizer,0.3,0.6,0.5,0.05,2};
+%     {@SnakeOptimizer,0.35,0.6,0.5,0.05,2};
+% };
+
+
+
 obj_min= zeros(length(al_handles),n_func,runs);
 best = zeros(length(al_handles),n_func,runs);
 
