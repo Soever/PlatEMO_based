@@ -11,7 +11,7 @@ classdef MRPSO < ALGORITHM
 
             %% Optimization
             while Algorithm.NotTerminated(Archive)
-                REP        = multi_resolution_grid(Archive.objs,Problem.N,div);
+                REP        = multi_resolution_grid(Archive.objs,Problem.N,div,2);
                 Population = OperatorPSO(Problem,Population,Pbest,Archive(REP));
                 Archive    = updateArchive([Archive,Population],Problem.N,div);
                 Pbest      = UpdatePbest(Pbest,Population);
