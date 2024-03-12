@@ -75,12 +75,13 @@ global result_t ;
 % end
 
 rng(2024);
-
+platemo('problem',@CEC2017_F4,'algorithm',@LA_PSO,'N',N,'D',D,'maxFE',15000);
+platemo('problem',@CEC2017_F4,'algorithm',@PSO,'N',N,'D',D,'maxFE',15000);
 %platemo('problem',@CEC2017_F4,'algorithm',@GA,'N',N,'D',D,'maxFE',15000);
 %platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer,'N',N,'D',D,'maxFE',15000);
 %platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_pro,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@ZDT1,'algorithm',@MOPSO,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@ZDT1,'algorithm',@MRPSO,'N',N,'D',D,'maxFE',15000);
+%platemo('problem',@ZDT1,'algorithm',@MOPSO,'N',N,'D',D,'maxFE',15000);
+%platemo('problem',@ZDT1,'algorithm',@MRPSO,'N',N,'D',D,'maxFE',15000);
 % platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_random,'N',N,'D',D,'maxFE',15000);
 % platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_random2,'N',N,'D',D,'maxFE',15000);
 

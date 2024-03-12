@@ -47,7 +47,6 @@ function REP = multi_resolution_grid(PopObj,N,div1,div2)
                 Spies = 1: Spices_all;
                 CrowdG   = histcounts(Site, 0.5:1:Spices_all+0.5);
             end
-            
         end
     
         pop_index  = find(Site==Spies);
