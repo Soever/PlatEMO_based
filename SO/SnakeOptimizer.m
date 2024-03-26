@@ -15,7 +15,6 @@ classdef SnakeOptimizer < ALGORITHM
             lb = Problem.lower;  % 下界
             ub = Problem.upper;  % 上界
 
-            vec_flag = [1, -1];
 
             X = Problem.Initialization();
             fitness = X.objs ;
@@ -36,8 +35,7 @@ classdef SnakeOptimizer < ALGORITHM
                 t = t+1 ;
                 Temp=exp(-((t)/T));  %eq.(4)
                 Q=C1*exp(((t-T)/(T)));%eq.(5)
-                Xnewm = Xm.decs ;
-                Xnewf =Xf.decs  ;
+ 
        
                 if Q>1        Q=1;    end
                 if Q<Threshold

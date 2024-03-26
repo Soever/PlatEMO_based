@@ -24,7 +24,7 @@ classdef LA_PSO < ALGORITHM
                 oldPopulation = Population ;
                 t = t+1 ;
                 r = rand() ;
-                if r<Algorithm.lp & t>1
+                if r<Algorithm.lp & t>1 & size(Algorithm.arch,1)>0
                      Population = Opertor_LearningEvolution(Problem, Population.decs, ANN,Pbest.decs,alpha,beta );
                 else
                      Population = OperatorPSO(Problem,oldPopulation,Pbest,Gbest,W);
@@ -54,12 +54,15 @@ classdef LA_PSO < ALGORITHM
 end
 
 function ANN = trainANN(ANN,arch)
-    inputs = cell2mat(arch(:, 1));
-    outputs = cell2mat(arch(:, 2));
+    if size(arch,1) > 0
+        inputs = cell2mat(arch(:, 1));
+        outputs = cell2mat(arch(:, 2));
+        
+        % trainOpts = trainingOptions('Plots','none', 'Verbose',false);
     
-    % trainOpts = trainingOptions('Plots','none', 'Verbose',false);
+        ANN= train(ANN,inputs',outputs');
+    end
 
-    ANN= train(ANN,inputs',outputs');
 end
 
 
@@ -69,7 +72,9 @@ function Population = Opertor_LearningEvolution(Problem, decs, ANN,Pbest_decs,al
     pairs = generateRandomPairs(n) ;
     scale_Pbest_decs= scale(Pbest_decs,Problem.lower,Problem.upper);
     ind_b = pairs(:,1);ind_c = pairs(:,2);
-    Xa = ANN(scale_Pbest_decs');Xa = Xa';Xa = scale_reverse(Xa,Problem.lower,Problem.upper);
+    Xa = ANN(scale_Pbest_decs');
+    Xa = Xa';
+    Xa = scale_reverse(Xa,Problem.lower,Problem.upper);
     Xb = decs(ind_b,:);
     Xc = decs(ind_c,:);          
     newX = Xa +alpha*(Xb-Xc);

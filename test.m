@@ -75,8 +75,21 @@ global result_t ;
 % end
 
 rng(2024);
-platemo('problem',@CEC2017_F4,'algorithm',@LA_PSO,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@CEC2017_F4,'algorithm',@PSO,'N',N,'D',D,'maxFE',15000);
+platemo('problem',@CEC2008_F1,'algorithm',@ESO1 ,'N',N,'D',D,'maxFE',15000);
+platemo('problem',@CEC2008_F1,'algorithm',@ESO2 ,'N',N,'D',D,'maxFE',15000);
+platemo('problem',@CEC2008_F1,'algorithm',@ESO3 ,'N',N,'D',D,'maxFE',15000);
+platemo('problem',@CEC2008_F1,'algorithm',@ESO4 ,'N',N,'D',D,'maxFE',15000);
+platemo('problem',@CEC2008_F1,'algorithm',@SnakeOptimizer ,'N',N,'D',D,'maxFE',15000);
+platemo('problem',@CEC2008_F1,'algorithm',@eso_emo ,'N',N,'D',D,'maxFE',15000);
+
+% platemo('problem',@CEC2008_F1,'algorithm',@SO1,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@SO2,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@SO3,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@SO13,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@SO23,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@SO12,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2020_F1,'algorithm',@LA_PSO,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2020_F1,'algorithm',@PSO,'N',N,'D',D,'maxFE',15000);
 %platemo('problem',@CEC2017_F4,'algorithm',@GA,'N',N,'D',D,'maxFE',15000);
 %platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer,'N',N,'D',D,'maxFE',15000);
 %platemo('problem',@CEC2017_F1,'algorithm',@SnakeOptimizer_pro,'N',N,'D',D,'maxFE',15000);

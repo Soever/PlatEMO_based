@@ -1,6 +1,6 @@
 function Xnew = so_exploration(N,dim,X,C2,ub,lb)
 vec_flag = [1, -1];
-    fitness = X.decs ;
+    fitness = X.objs ;
     for i=1:N
         for j=1:1:dim
             rand_leader_index = floor(N*rand()+1);
