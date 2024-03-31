@@ -12,8 +12,8 @@ Function_name='F1';
 results1= zeros(runs);
 results2= zeros(runs);
 
-[Xfood, fval,Convergence_curve,Trajectories,fitness_history, position_history]=ESO_1(N,T,lb,ub,dim,fobj); 
-
+[Xfood, fval2,Convergence_curve,Trajectories,fitness_history, position_history]=ESO_Algorithm(N,T,lb,ub,dim,fobj); 
+[Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=ESO_Algorithm(N,T,lb,ub,dim,fobj); 
 % parfor i=1:runs
 %     [Xfood, fval,Convergence_curve,Trajectories,fitness_history, position_history]=ESO(N,T,lb,ub,dim,fobj); %¿ªÊ¼ÓÅ»¯
 %     [Best_pos,Best_score,SO_curve]=SO(N,T,lb,ub,dim,fobj);
