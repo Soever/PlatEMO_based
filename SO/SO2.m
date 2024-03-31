@@ -1,4 +1,4 @@
-classdef SnakeOptimizer < ALGORITHM
+classdef SO2 < ALGORITHM
     methods
         function main(Algorithm,Problem)
             global result_t ;
@@ -15,6 +15,7 @@ classdef SnakeOptimizer < ALGORITHM
             lb = Problem.lower;  % 下界
             ub = Problem.upper;  % 上界
 
+            vec_flag = [1, -1];
 
             X = Problem.Initialization();
             fitness = X.objs ;
@@ -35,22 +36,14 @@ classdef SnakeOptimizer < ALGORITHM
                 t = t+1 ;
                 Temp=exp(-((t)/T));  %eq.(4)
                 Q=C1*exp(((t-T)/(T)));%eq.(5)
- 
+                Xnewm = Xm.decs ;
+                Xnewf =Xf.decs  ;
        
                 if Q>1        Q=1;    end
-                if Q<Threshold
-                    %雄性探索
-                    Xnewm = so_exploration(Nm,dim,Xm,C2,ub,lb);
-                    Xnewf = so_exploration(Nf,dim,Xf,C2,ub,lb);
+                 Xnewm =so_exploitation_food_hot(Nm,dim,Xfood,C3,Temp,Xm);
+                 Xnewf =so_exploitation_food_hot(Nf,dim,Xfood,C3,Temp,Xf);
 
-                else %Exploitation Phase (Food Exists)
-                    if Temp>Thresold2  %hot
-                        Xnewm =so_exploitation_food_hot(Nm,dim,Xfood,C3,Temp,Xm);
-                        Xnewf =so_exploitation_food_hot(Nf,dim,Xfood,C3,Temp,Xf);
-                    else %cold
-                       [Xnewm,Xnewf] = so_exploitation_food_cold(Nm,Nf,dim,C3,Q,Xbest_m,Xbest_f,Xm,Xf,lb,ub);
-                    end
-                end
+                
 
                 %更新雄性种群
                 for j=1:Nm

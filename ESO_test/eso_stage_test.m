@@ -1,76 +1,82 @@
-
 clear all 
 clc
+runs = 30 ;
+N=30;
 
-N=30; % Number of search agents
+functionNames = arrayfun(@(x) ['F', num2str(x)], 1:23, 'UniformOutput', false);
 
-Function_name='F18'; % Name of the test function that can be from F1 to F23 (Table 1,2,3 in the paper)
-
-T=200; % Maximum numbef of iterations
-
-% Load details of the selected benchmark function
-[lb,ub,dim,fobj]=Get_Functions_details(Function_name);
-  [Xfood, fval,Convergence_curve,Trajectories,fitness_history, position_history]=ESO(N,T,lb,ub,dim,fobj); %¿ªÊ¼ÓÅ»¯
-  [Best_pos,Best_score,SO_curve]=SO(N,T,lb,ub,dim,fobj); 
- figure('Position',[39         479        1727         267])
-color1 = [205 205 0];
-color2 = [139 101 8];
-color3 = [205 155 155];
-color4 = [238 121 66];
-%Draw search space
-subplot(1,5,1);
-func_plot(Function_name);
-title('Parameter space')
-xlabel('x_1');
-ylabel('x_2');
-zlabel([Function_name,'( x_1 , x_2 )'])
-box on
-axis tight
-
-subplot(1,5,2);
-semilogy(Convergence_curve,'Color','r','linewidth',1.5)
-hold on
-semilogy(SO_curve,'Color','b','linewidth',1.5)
-title('Convergence curve')
-xlabel('Iteration#');
-ylabel('Best score obtained so far');
-box on
-legend('ESO','SO')
-
-axis tight
-
-subplot(1,5,3);
-hold on
-semilogy(Trajectories(1,:),'Color',color4/255,'linewidth',1.5);
-title('Trajectory ')
-xlabel('Iteration#')
-box on
-axis tight
-
-subplot(1,5,4);
-hold on
-a=mean(fitness_history);
-semilogy(a,'Color',color2/255,'linewidth',1.5);
-title('Average Fitness ')
-xlabel('Iteration#')
-box on
-axis tight
+resMean =zeros(23,6);
+resStd =zeros(23,6);
 
 
-subplot(1,5,5);
-hold on
-for k1 = 1: size(position_history,1)
-    for k2 = 1: size(position_history,2)
-        plot(position_history(k1,k2,1),position_history(k1,k2,2),'.','markersize',1,'MarkerEdgeColor','k','markerfacecolor','k');
+T=50; 
+parfor index=1:23
+    Function_name=functionNames{index};
+    [lb,ub,dim,fobj]=Get_Functions_details(Function_name);
+    results1= zeros(runs,1);
+    results2= zeros(runs,1);
+    results3= zeros(runs,1);
+    results4= zeros(runs,1);
+    resultsSO= zeros(runs,1);
+    resultsESO= zeros(runs,1);
+    for i=1:runs
+        [Xfood, fval,Convergence_curve,Trajectories,fitness_history, position_history]=ESO(N,T,lb,ub,dim,fobj); 
+       
+        [Xfood1, fval1,Convergence_curve1,Trajectories1,fitness_history1, position_history1]=ESO_1(N,T,lb,ub,dim,fobj); 
+        [Xfood2, fval2,Convergence_curve2,Trajectories2,fitness_history2, position_history2]=ESO_2(N,T,lb,ub,dim,fobj); 
+        [Xfood3, fval3,Convergence_curve3,Trajectories3,fitness_history3, position_history3]=ESO_3(N,T,lb,ub,dim,fobj); 
+        [Xfood4, fval4,Convergence_curve4,Trajectories4,fitness_history4, position_history4]=ESO_4(N,T,lb,ub,dim,fobj); 
+        [Best_pos,Best_score,SO_curve]=SO(N,T,lb,ub,dim,fobj);
+        resultsESO(i) = fval ;
+        results1(i) = fval1 ;
+        results2(i) = fval2 ;
+        results3(i) = fval3 ;
+        results4(i) = fval4 ;
+        resultsSO(i) = Best_score ;
+        
     end
+     resMean(index, :) = [mean(resultsSO), mean(results1), mean(results2), mean(results3), mean(results4), mean(resultsESO)];
+     resStd(index, :) = [std(resultsSO), std(results1), std(results2), std(results3), std(results4), std(resultsESO)];
+
+    % resMean(index,1) = mean(resultsSO);
+    % resStd (index,1) = std(resultsSO);
+    % resMean(index,2) = mean(results1);
+    % resStd (index,2) = std(results1);
+    % resMean(index,3) = mean(results2);
+    % resStd (index,3) = std(results2);
+    % resMean(index,4) = mean(results3);
+    % resStd (index,4) = std(results3);
+    % resMean(index,5) = mean(results4);
+    % resStd (index,5) = std(results4);
+    % resMean(index,6) = mean(resultsESO);
+    % resStd (index,6) = std(resultsESO);
 end
-plot(Xfood(1),Xfood(2),'.','markersize',10,'MarkerEdgeColor','r','markerfacecolor','r','linewidth',2);
-title('Search history (x1 and x2 only)')
-xlabel('x1')
-ylabel('x2')
-box on
-axis tight
-% 
-subplot(1,5,5);
-hold on
-func_plot1(Function_name)
+%%
+clear all 
+clc
+runs = 30 ;
+N=30;T=200; 
+
+Function_name='cec06';
+[lb,ub,dim,fobj]=Get_Functions_details(Function_name);
+
+
+
+results1= zeros(runs,1);
+results2= zeros(runs,1);
+parfor i=1:runs
+    [Xfood, fval,Convergence_curve,Trajectories,fitness_history, position_history]=ESO(N,T,lb,ub,30,fobj); %¿ªÊ¼ÓÅ»¯
+    [Best_pos,Best_score,SO_curve]=SO(N,T,lb,ub,30,fobj);
+    results1(i) = Best_score ;
+    results2(i) = fval ;
+end
+
+resMean = mean(results1);
+resStd  = std(results1);
+
+resMean2 = mean(results2);
+resStd2  = std(results2);
+
+
+
+a = 5 ;
