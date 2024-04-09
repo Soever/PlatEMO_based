@@ -10,20 +10,13 @@ C1=0.5*ones(1,T);
 C2=0.05*ones(1,T);
 C3=2*ones(1,T);
 if any(stage== 1)
-    for l= 1:T
-        C1(1,l)=C1(1,l)+0.1*sin((pi/2)*((rand).^4));%eq.(14)
-        C2(1,l)=C2(1,l)+0.001*cos((pi/2)*((rand).^4));%eq.(15)
-        C3(1,l)=C3(1,l)-2*sin(0.5*pi*(l/T)^4);%eq.(16)
-    end
+    [C1,C2,C3] = DynamicUpdate(C1,C2,C3) ;
 end
 t1=ones(1,T);
 t2=ones(1,T);
 a=0.05;
 if any(stage== 3)
-    for l= 1:T
-    t1(1,l)=t1(1,l)+(0.0001*(sin(a*4*pi*l)+cos(a*6*pi*l)))*exp((pi/100)*(0.25*(T-l)));
-    t2(1,l)=t2(1,l)+(0.0001*(cos(a*4*pi*l)+sin(a*6*pi*l)))*exp((pi/100)*(0.25*(T-l)));
-    end
+    [t1,t2] = SineCosineCompositePerturbationFactors(t1,t2,a);
 end
 
 ub1 = ub.*ones(1,dim);
@@ -70,14 +63,15 @@ for t = 1:T
     end
      %% the principle of convex lens imaging
      if any(stage== 2)
-        TempXm = ConvexLensImaging(Xbest_m,ub,ub1,lb,lb1);
+        k = 10*(1-2*(t/T)^2);% scaling factor eq.(19)
+        TempXm = ConvexLensImaging(k,Xbest_m,ub,ub1,lb,lb1);
         fitTemp = fobj(TempXm);
         if(fitTemp<GYbest)
             fitnessBest_m=fitTemp ;
             Xbest_m = TempXm;
             Xm(BestIndex1,:) = TempXm;
         end
-        TempXf = ConvexLensImaging(Xbest_f,ub,ub1,lb,lb1);
+        TempXf = ConvexLensImaging(k,Xbest_f,ub,ub1,lb,lb1);
         fitTemp = fobj(TempXf);
         if(fitTemp<GYbest)
             fitnessBest_f=fitTemp ;
@@ -134,7 +128,6 @@ for t = 1:T
                     for j=1:1:dim
                         FM=exp(-(fitnessBest_f)/(fitness_m(i)+eps));
                         Xnewm(i,j)=t1(1,t)*Xm(i,j) +C3(1,t)*FM*rand*(Q*Xbest_f(j)-Xm(i,j));%eq.(8)
-
                     end
                 end
                 for i=1:Nf
@@ -190,43 +183,41 @@ for t = 1:T
         if y<fitness_f(j)
             fitness_f(j)=y;
             Xf(j,:)= Xnewf(j,:);
-
         end
     end
 
-
-
-   avgF = mean(fitness_m);
-    for j = 1:Nm
-        if(fitness_m(j) < avgF)
-            %% Cauchy mutation
-            Temp = Xm(j,:).*(1 + tan(pi*(rand-0.5)));%eq.(28)
-            %% Return back the search agents that go beyond the boundaries of the search space
-            Temp(Temp>ub) = ub2(Temp>ub);
-            Temp(Temp<lb) = lb2(Temp<lb);
-            ftemp = fobj(Temp);
-            if(ftemp<fitness_m(j))
-                fitness_m(j)= ftemp;
-                Xm(j,:) = Temp;
-            end
-        else
-            %% Tent-chaos
-            TentZ0 = rand;
-            TentValue =mod(2*TentZ0,1)+rand/(Nm*dim);%eq.(25)
-            newX=min(Xm)+(max(Xm)-min(Xm))*TentValue;
-            Temp = (Xm(j,:)+newX)./2;
-            ftemp = fobj(Temp);
-            %% Return back the search agents that go beyond the boundaries of the search space
-            Temp(Temp>ub) = ub2(Temp>ub);
-            Temp(Temp<lb) = lb2(Temp<lb);
-            if(ftemp<fitness_m(j))
-                fitness_m(j) = ftemp;
-                Xm(j,:) = Temp;
+    if any(stage== 4)
+         avgF = mean(fitness_m);
+         for j = 1:Nm
+            if(fitness_m(j) < avgF)
+                %% Cauchy mutation
+                Temp = Xm(j,:).*(1 + tan(pi*(rand-0.5)));%eq.(28)
+                %% Return back the search agents that go beyond the boundaries of the search space
+                Temp(Temp>ub) = ub2(Temp>ub);
+                Temp(Temp<lb) = lb2(Temp<lb);
+                ftemp = fobj(Temp);
+                if(ftemp<fitness_m(j))
+                    fitness_m(j)= ftemp;
+                    Xm(j,:) = Temp;
+                end
+            else
+                %% Tent-chaos
+                TentZ0 = rand;
+                TentValue =mod(2*TentZ0,1)+rand/(Nm*dim);%eq.(25)
+                newX=min(Xm)+(max(Xm)-min(Xm))*TentValue;
+                Temp = (Xm(j,:)+newX)./2;
+                ftemp = fobj(Temp);
+                %% Return back the search agents that go beyond the boundaries of the search space
+                Temp(Temp>ub) = ub2(Temp>ub);
+                Temp(Temp<lb) = lb2(Temp<lb);
+                if(ftemp<fitness_m(j))
+                    fitness_m(j) = ftemp;
+                    Xm(j,:) = Temp;
+                end
             end
         end
-    end
 
-   avgF = mean(fitness_f);
+     avgF = mean(fitness_f);
     for j = 1:Nf
         if(fitness_f(j) < avgF)
             %% Cauchy mutation
@@ -255,6 +246,8 @@ for t = 1:T
             end
         end
     end
+    end
+   
         [Ybest1,gbest1] = min(fitness_m);
         BestIndex1=gbest1;
             [Ybest2,gbest2] = min(fitness_f);
