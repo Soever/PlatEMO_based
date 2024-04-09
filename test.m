@@ -75,11 +75,11 @@ global result_t ;
 % end
 
 rng(2024);
-platemo('problem',@CEC2008_F1,'algorithm',@ESO1 ,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@CEC2008_F1,'algorithm',@ESO2 ,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@CEC2008_F1,'algorithm',@ESO3 ,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@CEC2008_F1,'algorithm',@ESO4 ,'N',N,'D',D,'maxFE',15000);
-platemo('problem',@CEC2008_F1,'algorithm',@SnakeOptimizer ,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@ESO1 ,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@ESO2 ,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@ESO3 ,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@ESO4 ,'N',N,'D',D,'maxFE',15000);
+% platemo('problem',@CEC2008_F1,'algorithm',@SnakeOptimizer ,'N',N,'D',D,'maxFE',15000);
 platemo('problem',@CEC2008_F1,'algorithm',@eso_emo ,'N',N,'D',D,'maxFE',15000);
 
 % platemo('problem',@CEC2008_F1,'algorithm',@SO1,'N',N,'D',D,'maxFE',15000);
