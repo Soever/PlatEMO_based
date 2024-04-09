@@ -1,14 +1,30 @@
 
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLESO(N,T,lb,ub,dim,fobj)
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLESO(N,T,lb,ub,dim,fobj,stage)
+
+q_table = zeros(2,2);
+if rand > 0.5
+    state = 1;
+else
+    state = 2 ;
+end
+episilon = 0.3 ;
 %% initial
 vec_flag=[1,-1];
 Threshold=0.25;
 Thresold2= 0.6;
-
-C3=zeros(1,T);
-for l= 1:T
-    C3(1,l)=2-2*sin(0.5*pi*(l/T)^4);%eq.(16)
+C1=0.5*ones(1,T);
+C2=0.05*ones(1,T);
+C3=2*ones(1,T);
+if any(stage== 1)
+    [C1,C2,C3] = DynamicUpdate(C1,C2,C3) ;
 end
+t1=ones(1,T);
+t2=ones(1,T);
+a=0.05;
+if any(stage== 3)
+    [t1,t2] = SineCosineCompositePerturbationFactors(t1,t2,a);
+end
+
 ub1 = ub.*ones(1,dim);
 lb1 = lb.*ones(1,dim);
 if(max(size(ub)) == 1)
@@ -25,13 +41,7 @@ end
 Trajectories=zeros(N,T);
 position_history=zeros(N,T,dim);
 fitness_history=zeros(N,T);
-t1=zeros(1,T);
-t2=zeros(1,T);
-a=0.05;
-for l= 1:T
-    t1(1,l)=1+(0.0001*(sin(a*4*pi*l)+cos(a*6*pi*l)))*exp((pi/100)*(0.25*(T-l)));
-    t2(1,l)=1+(0.0001*(cos(a*4*pi*l)+sin(a*6*pi*l)))*exp((pi/100)*(0.25*(T-l)));
-end
+
 
 [GYbest, gbest] = min(fitness);
 Xfood = X(gbest,:);
@@ -51,51 +61,43 @@ Xbest_f = Xf(gbest2,:);
 
 %% Main loop
 for t = 1:T
+    reward = 0 ;
         Positions=[Xm;Xf];
     for i=1:size(Positions,1)
         position_history(i,t,:)=Positions(i,:);
         Trajectories(:,t)=Positions(:,1);
         fitness_history(i,t)=fobj(Positions(i,:));
     end
+    if rand < episilon
+        if rand < 0.5 action = 1 ;else action = 2;end
+    else
+        [maxV,maxAction] = max(q_table(state,:));
+        action = maxAction;
+    end
+   
      %% the principle of convex lens imaging
-    k = 10*(1-2*(t/T)^2);% scaling factor eq.(19)
-    Temp = (ub + lb)./2 + (ub + lb)./(2*k) - Xbest_m./k; %eq.(20)
-    for c = 1:dim
-        if(Temp(1,c)>ub)
-            Temp(1,c) =ub1(c);
+     if action== 1
+        k = 10*(1-2*(t/T)^2);% scaling factor eq.(19)
+        TempXm = ConvexLensImaging(k,Xbest_m,ub,ub1,lb,lb1);
+        fitTemp = fobj(TempXm);
+        if(fitTemp<GYbest)
+            fitnessBest_m=fitTemp ;
+            Xbest_m = TempXm;
+            Xm(BestIndex1,:) = TempXm;
+            reward =reward+1 ;
         end
-        if(Temp(1,c)<lb)
-            Temp(1,c)  =lb1(c);
+        TempXf = ConvexLensImaging(k,Xbest_f,ub,ub1,lb,lb1);
+        fitTemp = fobj(TempXf);
+        if(fitTemp<GYbest)
+            fitnessBest_f=fitTemp ;
+            Xbest_f = TempXf;
+            Xf(BestIndex2,:) = TempXf;
+            reward =reward+1 ;
         end
-    end
-    fitTemp = fobj(Temp);
-    if(fitTemp<GYbest)
-        fitnessBest_m=fitTemp ;
-        Xbest_m = Temp;
-          Xm(BestIndex1,:) = Temp;
     end
 
-    k = 10*(1-2*(t/T)^2); 
-    Temp = (ub + lb)./2 + (ub + lb)./(2*k) - Xbest_f./k;
-    for c = 1:dim
-        if(Temp(1,c)>ub)
-            Temp(1,c) =ub1(c);
-        end
-        if(Temp(1,c)<lb)
-            Temp(1,c)  =lb1(c);
-        end
-    end
-    fitTemp = fobj(Temp);
-    if(fitTemp<GYbest)
-        fitnessBest_f=fitTemp ;
-        Xbest_f = Temp;
-         Xf(BestIndex2,:) = Temp;
-    end
-
-    C1=0.5+0.1*sin((pi/2)*((rand).^4));%eq.(14)
-    C2=0.05+0.001*cos((pi/2)*((rand).^4));%eq.(15)
     Temp=exp(-((t)/T));  %eq.(4)
-    Q=C1*exp(((t-T)/(T)));%eq.(5)
+    Q=C1(1,t)*exp(((t-T)/(T)));%eq.(5)
     if Q>1        Q=1;    end
     %% Exploration Phase (No Food)
     if Q<Threshold
@@ -106,7 +108,7 @@ for t = 1:T
                 flag_index = floor(2*rand()+1);
                 Flag=vec_flag(flag_index);
                 Am=exp(-fitness_m(rand_leader_index)/(fitness_m(i)+eps));
-                Xnewm(i,j)=X_randm(j)+Flag*C2*Am*((ub-lb)*rand+lb);%eq.(5)
+                Xnewm(i,j)=X_randm(j)+Flag*C2(1,t)*Am*((ub-lb)*rand+lb);%eq.(5)
             end
         end
         for i=1:Nf
@@ -116,7 +118,7 @@ for t = 1:T
                 flag_index = floor(2*rand()+1);
                 Flag=vec_flag(flag_index);
                 Af=exp(-fitness_f(rand_leader_index)/(fitness_f(i)+eps));
-                Xnewf(i,j)=X_randf(j)+Flag*C2*Af*((ub-lb)*rand+lb);%eq.(6)
+                Xnewf(i,j)=X_randf(j)+Flag*C2(1,t)*Af*((ub-lb)*rand+lb);%eq.(6)
             end
         end
     %% Exploitation Phase (Food Exists)
@@ -142,7 +144,6 @@ for t = 1:T
                     for j=1:1:dim
                         FM=exp(-(fitnessBest_f)/(fitness_m(i)+eps));
                         Xnewm(i,j)=t1(1,t)*Xm(i,j) +C3(1,t)*FM*rand*(Q*Xbest_f(j)-Xm(i,j));%eq.(8)
-
                     end
                 end
                 for i=1:Nf
@@ -198,45 +199,43 @@ for t = 1:T
         if y<fitness_f(j)
             fitness_f(j)=y;
             Xf(j,:)= Xnewf(j,:);
-
         end
     end
 
-
-
-   avgF = mean(fitness_m);
-    for j = 1:Nm
-        if(fitness_m(j) < avgF)
-            %% Cauchy mutation
-            Temp = Xm(j,:).*(1 + tan(pi*(rand-0.5)));%eq.(28)
-            %% Return back the search agents that go beyond the boundaries of the search space
-            Temp(Temp>ub) = ub2(Temp>ub);
-            Temp(Temp<lb) = lb2(Temp<lb);
-            ftemp = fobj(Temp);
-            if(ftemp<fitness_m(j))
-                fitness_m(j)= ftemp;
-                Xm(j,:) = Temp;
-            end
-        else
-            %% Tent-chaos
-            TentZ0 = rand;
-            TentValue =mod(2*TentZ0,1)+rand/(Nm*dim);%eq.(25)
-            a = min(Xm);
-            ab = max(Xm);
-            newX=min(Xm)+(max(Xm)-min(Xm))*TentValue;
-            Temp = (Xm(j,:)+newX)./2;
-            ftemp = fobj(Temp);
-            %% Return back the search agents that go beyond the boundaries of the search space
-            Temp(Temp>ub) = ub2(Temp>ub);
-            Temp(Temp<lb) = lb2(Temp<lb);
-            if(ftemp<fitness_m(j))
-                fitness_m(j) = ftemp;
-                Xm(j,:) = Temp;
+    if action == 2
+         avgF = mean(fitness_m);
+         for j = 1:Nm
+            if(fitness_m(j) < avgF)
+                %% Cauchy mutation
+                Temp = Xm(j,:).*(1 + tan(pi*(rand-0.5)));%eq.(28)
+                %% Return back the search agents that go beyond the boundaries of the search space
+                Temp(Temp>ub) = ub2(Temp>ub);
+                Temp(Temp<lb) = lb2(Temp<lb);
+                ftemp = fobj(Temp);
+                if(ftemp<fitness_m(j))
+                    fitness_m(j)= ftemp;
+                    Xm(j,:) = Temp;
+                    reward = reward+1 ;
+                end
+            else
+                %% Tent-chaos
+                TentZ0 = rand;
+                TentValue =mod(2*TentZ0,1)+rand/(Nm*dim);%eq.(25)
+                newX=min(Xm)+(max(Xm)-min(Xm))*TentValue;
+                Temp = (Xm(j,:)+newX)./2;
+                ftemp = fobj(Temp);
+                %% Return back the search agents that go beyond the boundaries of the search space
+                Temp(Temp>ub) = ub2(Temp>ub);
+                Temp(Temp<lb) = lb2(Temp<lb);
+                if(ftemp<fitness_m(j))
+                    fitness_m(j) = ftemp;
+                    Xm(j,:) = Temp;
+                      reward = reward+1 ;
+                end
             end
         end
-    end
 
-   avgF = mean(fitness_f);
+     avgF = mean(fitness_f);
     for j = 1:Nf
         if(fitness_f(j) < avgF)
             %% Cauchy mutation
@@ -248,6 +247,7 @@ for t = 1:T
             if(ftemp<fitness_f(j))
                 fitness_f(j) = ftemp;
                 Xf(j,:) = Temp;
+                 reward = reward+1 ;
             end
         else
             %% Tent-chaos
@@ -262,9 +262,15 @@ for t = 1:T
             if(ftemp<fitness_f(j))
                 fitness_f(j) = ftemp;
                 Xf(j,:) = Temp;
+                 reward = reward+1 ;
             end
         end
     end
+    end
+    reward = reward/(T-t+1) ;
+    q_table = updataQtable(state,action,reward,q_table);
+    state = action ;
+   
         [Ybest1,gbest1] = min(fitness_m);
         BestIndex1=gbest1;
             [Ybest2,gbest2] = min(fitness_f);
@@ -293,6 +299,14 @@ for t = 1:T
     end
 end
 fval = GYbest;
+end
+
+function q = updataQtable(s,a,r,q)
+    s_next = a;
+    [q_target,index] = max(q(s_next,:));
+    q(s,a) =q(s,a)+0.1*(r+0.9*q_target-q(s,a)) ;
+
+    
 end
 
 
