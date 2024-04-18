@@ -1,6 +1,8 @@
-
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO_FitnessDiversityGrid(N,T,lb,ub,dim,fobj)
-
+%% RLSO_2
+% state 种群的平均适应度，种群的多样性
+% action so的四个策略 （都执行择优）
+% reward 个体变好 +1 否则-1
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO_2(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -53,44 +55,47 @@ d0_m = sum(std(Xm,1)) / (Nm*Diagonal_Length) ;
 f0_m = mean(fitness_m) / Nm ;
 d0_f = sum(std(Xf,1)) / (Nf*Diagonal_Length) ;
 f0_f = mean(fitness_f) / Nf ;
-RF_num = 5 ;RD_num = 5 ;strategy_num = 3 ;
+RF_num = 5 ;RD_num = 5 ;strategy_num = 4 ;
 q_table_m = zeros(RF_num,RD_num,strategy_num);
 q_table_f = zeros(RF_num,RD_num,strategy_num);
 %% Main loop
 for t = 1:T
+    disp(t);
+    Temp=exp(-((t)/T));  %eq.(4)
+    Q=C1(1,t)*exp(((t-T)/(T)));%eq.(5)
     Positions=[Xm;Xf];
     for i=1:size(Positions,1)
         position_history(i,t,:)=Positions(i,:);
         Trajectories(:,t)=Positions(:,1);
         fitness_history(i,t)=fobj(Positions(i,:));
     end
-    Temp=exp(-((t)/T));  %eq.(4)
-    Q=C1(1,t)*exp(((t-T)/(T)));%eq.(5)
-    if Q>1        Q=1;    end
-    if Q<Threshold
-         newXm_dec = exploration_NoFood(Xm,fitness_m,C2(1,t),lb,ub);
-         newXf_dec = exploration_NoFood(Xf,fitness_f,C2(1,t),lb,ub);
-    else
-        if Temp>Thresold2
-            newXm_dec = exploit_Food(Xm,Xfood,Temp,C3(1,t));
-            newXf_dec = exploit_Food(Xf,Xfood,Temp,C3(1,t));
-        else 
-            if rand>0.6 
-                newXm_dec = so_fight(Xm,fitness_m,Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
-                newXf_dec = so_fight(Xf,fitness_f,Xbest_m,fitnessBest_m,t1(1,t),C3(1,t),Q) ;
-            else
-                [newXm_dec, newXf_dec] = so_mating(Xm,Xf,fitness_m,fitness_f,C3(1,t),Q,lb,ub);
-            end
-        end
-    end
-    [Xm,fitness_m] = Evaluation(Xm,newXm_dec,fitness_m,lb,ub,fobj);
-    [Xf,fitness_f] = Evaluation(Xf,newXf_dec,fitness_f,lb,ub,fobj);
+    
     state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
     state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
     action_m = get_action(q_table_m,state_m) ;
     action_f = get_action(q_table_f,state_f) ;
-    [Xm,fitness_m,reward_m,next_state_m]= act(action_m,Xm,fitness_m,Nm,lb,ub,fobj,d0_m,f0_m,Diagonal_Length,t);
-    [Xf,fitness_f,reward_f,next_state_f]= act(action_f,Xf,fitness_f,Nf,lb,ub,fobj,d0_f,f0_f,Diagonal_Length,t);
+    if action_m==1
+         newXm_dec = exploration_NoFood(Xm,fitness_m,C2(1,t),lb,ub);
+    elseif action_m==2
+         newXm_dec = exploit_Food(Xm,Xfood,Temp,C3(1,t));
+    elseif action_m==3 
+        newXm_dec = so_fight(Xm,fitness_m,Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
+    else
+        [newXm_dec, ~] = so_mating(Xm,Xf,fitness_m,fitness_f,C3(1,t),Q,lb,ub);
+    end
+    if action_f==1
+         newXf_dec = exploration_NoFood(Xf,fitness_f,C2(1,t),lb,ub);
+    elseif action_f==2
+         newXf_dec = exploit_Food(Xf,Xfood,Temp,C3(1,t));
+    elseif action_f==3 
+        newXf_dec = so_fight(Xf,fitness_f,Xbest_m,fitnessBest_m,t1(1,t),C3(1,t),Q) ;
+    else
+        [~, newXf_dec] = so_mating(Xm,Xf,fitness_m,fitness_f,C3(1,t),Q,lb,ub);
+    end
+    [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
+    [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
+    next_state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
+    next_state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
     q_table_m = updataQtable(state_m,action_m,reward_m,next_state_m,q_table_m);
     q_table_f = updataQtable(state_f,action_f,reward_f,next_state_f,q_table_f);
 
@@ -153,14 +158,16 @@ function Probability = softmax(x)
     Probability = exp_x / sum(exp_x);
 end
 
-function [X_dec,fitness,reward,next_state]  = act(action,X_dec,fitness,N,lb,ub,fobj,d0,f0,Diagonal_Length,t)
+function [X_dec,fitness,reward,next_state]  = act(action,action2,X_dec,X2,fitness,fitness2,N,lb,ub,fobj,d0_m,f0_m,Diagonal_Length,t,C2,C3,Q,Temp,Xfood)
     newX_dec = zeros(size(X_dec));
     if action==1
-        newX_dec = CauchyMutation(X_dec);
+        newX_dec = exploration_NoFood(X_dec,fitness,C2,lb,ub);
     elseif action == 2
-        newX_dec = GaussianMutation(X_dec,lb,ub);
+        newX_dec = exploit_Food(X_dec,Xfood,Temp,C3);
     elseif action == 3
-        newX_dec = tMutation(X_dec,t);
+        newX_dec = so_fight(X_dec,fitness2,Xbest,min(fitnessBest),t1,C3,Q) ;
+    elseif action == 4 && action2 ==4
+        [newX_dec, ~] = so_mating(X_dec,X2,fitness,fitness2,C3,Q,lb,ub);
     else
         error("action error");
     end
@@ -170,35 +177,49 @@ function [X_dec,fitness,reward,next_state]  = act(action,X_dec,fitness,N,lb,ub,f
         Flag4lb=newX_dec(j,:)<lb;
         newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
         fitness_new(j) = feval(fobj,newX_dec(j,:));
-        if fitness_new(j) <fitness(j)
-            fitness(j) = fitness_new(j);
-            X_dec(j,:) = newX_dec(j,:) ;
-            reward(j) = 1 ;
+        if min(fitness_new) <min(fitness)
+            if mean(fitness_new) <mean(fitness)
+                reward = 3 ;
+            else
+                reward = 1 ;
+            end
         else
-            reward(j) = -1 ;
+            if mean(fitness_new) <mean(fitness)
+                reward = -1 ;
+            else
+                reward = -3 ;
+            end
         end
     end
-    reward = sum(reward) ;
-    next_state = get_state(newX_dec,fitness_new,d0,f0,Diagonal_Length);
-     
+
+    next_state = get_state(newX_dec,fitness_new,d0_m,f0_m,Diagonal_Length);
+    X_dec=newX_dec ;
+    fitness=fitness_new;
 end
 function [X,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
     N = size(X,1);
-    reward = zeros(1,N);
+    fitness_new = zeros(size(fitness));
     for j=1:N
         Flag4ub=newX_dec(j,:)>ub;
         Flag4lb=newX_dec(j,:)<lb;
         newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
-        y = feval(fobj,newX_dec(j,:));
-        if y<fitness(j)
-            fitness(j)=y;
-            X(j,:)= newX_dec(j,:);
-            reward(1,j) = 1 ;
-        else
-            reward(1,j) = -1 ;
-        end
-
+        fitness_new(j) = feval(fobj,newX_dec(j,:));
     end
+    if min(fitness_new) <min(fitness) 
+        if mean(fitness_new) <mean(fitness)
+            reward = 3;
+        else
+            reward =1 ;
+        end
+    else
+        if mean(fitness_new) <mean(fitness)
+            reward = -1;
+        else
+            reward =-3 ;
+        end
+    end
+    
+    fitness = fitness_new;
 end
 function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     N = size(X,1);
