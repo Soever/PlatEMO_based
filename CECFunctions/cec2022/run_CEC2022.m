@@ -7,14 +7,17 @@ Max_iter=500; % 最大迭代次数
 dim = 2; % 可选 2, 10, 20
 
 %%  选择函数
-Function_name=5; % 函数名： 1 - 12
+Function_name=8; % 函数名： 1 - 12
 [lb,ub,dim,fobj] = Get_Functions_cec2022(Function_name,dim);
-
+% [Best_pos,Best_score,SO_curve]=SO(nPop,Max_iter,lb(1),ub(1),dim,fobj);
 %% 调用算法
 Optimal_results={}; % Optimal results
 index = 1;
+
 % WOA
 tic
+ 
+
 [Best_score,Best_pos,cg_curve]=WOA(nPop,Max_iter,lb,ub,dim,fobj);
 Optimal_results{1,index}="WOA";
 Optimal_results{2,index}=cg_curve;
