@@ -2,7 +2,7 @@
 % state 种群的平均适应度，种群的多样性
 % action so的四个策略 （都执行择优）
 % reward 个体变好 +1 否则-1
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO_2(N,T,lb,ub,dim,fobj)
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_3(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -42,24 +42,31 @@ Xm=X(1:Nm,:);
 Xf=X(Nm+1:N,:);
 fitness_m=fitness(1:Nm);fitness_f=fitness(Nm+1:N);
 
-
-
-
 [fitnessBest_m, gbest1] = min(fitness_m);Xbest_m = Xm(gbest1,:);
 [fitnessBest_f, gbest2] = min(fitness_f);Xbest_f = Xf(gbest2,:);
 %% state
 fitness_average_t = zeros(2,T) ;
 diversity_average_t = zeros(2,T) ;
 Diagonal_Length = sqrt(sum((ub2  - lb2 ).^2));
-d0_m = sum(std(Xm,1)) / (Nm*Diagonal_Length) ;
-f0_m = mean(fitness_m) / Nm ;
-d0_f = sum(std(Xf,1)) / (Nf*Diagonal_Length) ;
-f0_f = mean(fitness_f) / Nf ;
+
+diversity_m = cal_diversity(Xm) ;
+diversity_f = cal_diversity(Xf) ;
+
+d0_m = sum(diversity_m) / (Nm*Diagonal_Length) ;
+f0_m = mean(fitness_m)  ;
+d0_f = sum(diversity_f) / (Nf*Diagonal_Length) ;
+f0_f = mean(fitness_f)  ;
 RF_num = 5 ;RD_num = 5 ;strategy_num = 4 ;
 q_table_m = zeros(RF_num,RD_num,strategy_num);
 q_table_f = zeros(RF_num,RD_num,strategy_num);
+
+
+
 %% Main loop
 for t = 1:T
+    if t ==699
+        a = 1 ;
+    end
     disp(t);
     Temp=exp(-((t)/T));  %eq.(4)
     Q=C1(1,t)*exp(((t-T)/(T)));%eq.(5)
@@ -72,8 +79,8 @@ for t = 1:T
     
     state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
     state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
-    action_m = get_action(q_table_m,state_m) ;
-    action_f = get_action(q_table_f,state_f) ;
+    action_m = get_action_epi(q_table_m,state_m) ;
+    action_f = get_action_epi(q_table_f,state_f) ;
     if action_m==1
          newXm_dec = exploration_NoFood(Xm,fitness_m,C2(1,t),lb,ub);
     elseif action_m==2
@@ -116,11 +123,21 @@ function action = get_action(q_table,state)
     Probability = softmax(actions);
     action= randsample(1:length(Probability), 1, true, Probability );
 end
+function action = get_action_epi(q_table,state)
+    actions = q_table(state(1),state(2),:);
+    if rand <  0.3
+        action = randi(length(actions));  
+    else
+        maxIndices = find(actions == max(actions));
+        action = maxIndices(randi(length(maxIndices)));
+    end
+end
 function state = get_state(X,fitness,d0,f0,DL)
     [N,dim] = size(X) ;
     state = zeros(1,2) ;
-    D = sum(std(X,1)) / (N*DL) ;
-    F = mean(fitness) / N ;
+    diversity = cal_diversity(X) ;
+    D = sum(diversity) / (N*DL) ;
+    F = mean(fitness)  ;
     RD = D/d0 ;
     RF = F/f0 ;
     
@@ -196,7 +213,7 @@ function [X_dec,fitness,reward,next_state]  = act(action,action2,X_dec,X2,fitnes
     X_dec=newX_dec ;
     fitness=fitness_new;
 end
-function [X,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
+function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
     N = size(X,1);
     fitness_new = zeros(size(fitness));
     for j=1:N
@@ -204,7 +221,13 @@ function [X,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
         Flag4lb=newX_dec(j,:)<lb;
         newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
         fitness_new(j) = feval(fobj,newX_dec(j,:));
+        % 择优
+        if fitness_new(j)  < fitness(j)
+            X(j,:) = newX_dec(j,:) ;
+            fitness(j) = fitness_new(j);
+        end
     end
+    
     if min(fitness_new) <min(fitness) 
         if mean(fitness_new) <mean(fitness)
             reward = 3;
@@ -218,8 +241,10 @@ function [X,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
             reward =-3 ;
         end
     end
-    
-    fitness = fitness_new;
+
+ 
+    newX = X;
+
 end
 function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     N = size(X,1);
@@ -252,5 +277,20 @@ function [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,
     else
         GYbest=fitnessBest_f;
         Xfood=Xbest_f;
+    end
+end
+
+function diversity = cal_diversity(X_dec)
+    [N,dim] = size(X_dec);
+    d_pop = 0 ;
+    diversity = zeros(N,1) ;
+    x_mean = mean(X_dec);
+    for i = 1:N
+        d_ind = 0 ;
+        for j = 1:dim
+            d_ind = d_ind+(X_dec(i,j) - x_mean(1,j))^2; 
+        end
+        d_pop  = d_pop + d_ind  ;
+        diversity(i,1) = d_pop ;
     end
 end

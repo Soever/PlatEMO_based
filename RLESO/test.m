@@ -11,14 +11,16 @@ Function_name='F1';
 results1= zeros(runs);
 results2= zeros(runs);
  a = [1,2,3,4];
-
- T=10000; 
+rng(2024);
+ T=1000; 
 %[Xfood, fval22,Convergence_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj); 
+% [Xfood, fval22,Convergence_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj); 
 %[Best_pos,Best_score,SO_curve]=RLSO_FitnessDiversityGrid(N,T,lb,ub,dim,fobj); 
- [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=RLSO_2(N,T,lb,ub,dim,fobj); 
+  [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=RLSO2_4(N,T,lb,ub,dim,fobj); 
+  % [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=ESO(N,T,lb,ub,dim,fobj); 
 % [Best_pos,Best_score,SO_curve]=RLSO_FitnessDiversityGrid(N,T,lb,ub,dim,fobj); 
- [Best_pos,Best_score,SO_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj);
-
+  [Best_pos,Best_score,SO_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj);
+ % [Best_pos,Best_score,SO_curve,~,~]=RLSO_2(N,T,lb,ub,dim,fobj);
  figure('Position',[39         479        1727         267])
 color1 = [205 205 0];
 color2 = [139 101 8];
@@ -42,7 +44,7 @@ title('Convergence curve')
 xlabel('Iteration#');
 ylabel('Best score obtained so far');
 box on
-legend('ESO','SO')
+legend('RLSO_2','SO')
 
 
 
