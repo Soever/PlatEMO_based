@@ -5,7 +5,7 @@ N=100;
 
 
 
-Function_name='F1';
+Function_name='F5';
 [lb,ub,dim,fobj]=Get_Functions_details(Function_name);
 
 results1= zeros(runs);
@@ -16,7 +16,7 @@ rng(2024);
 %[Xfood, fval22,Convergence_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj); 
 % [Xfood, fval22,Convergence_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj); 
 %[Best_pos,Best_score,SO_curve]=RLSO_FitnessDiversityGrid(N,T,lb,ub,dim,fobj); 
-  [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=RLSO2_4(N,T,lb,ub,dim,fobj); 
+  [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=RLSO2_6(N,T,lb,ub,dim,fobj); 
   % [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=ESO(N,T,lb,ub,dim,fobj); 
 % [Best_pos,Best_score,SO_curve]=RLSO_FitnessDiversityGrid(N,T,lb,ub,dim,fobj); 
   [Best_pos,Best_score,SO_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj);
