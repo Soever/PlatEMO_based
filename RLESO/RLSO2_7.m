@@ -1,8 +1,8 @@
-%% RLSO_2
-% state 种群的平均适应度，种群的多样性 11*11
+%% RLSO2_7
+% state 种群的平均适应度，种群的多样性 3*3
 % action so的四个策略 （都执行择优）
 % reward 个体变好 +1 否则-1
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_5(N,T,lb,ub,dim,fobj)
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_7(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -44,6 +44,7 @@ fitness_m=fitness(1:Nm);fitness_f=fitness(Nm+1:N);
 
 [fitnessBest_m, gbest1] = min(fitness_m);Xbest_m = Xm(gbest1,:);
 [fitnessBest_f, gbest2] = min(fitness_f);Xbest_f = Xf(gbest2,:);
+BestIndex1=gbest1; BestIndex2=gbest2;
 %% state
 fitness_average_t = zeros(2,T) ;
 diversity_average_t = zeros(2,T) ;
@@ -56,17 +57,15 @@ d0_m = sum(diversity_m) / (Nm*Diagonal_Length) ;
 f0_m = mean(fitness_m)  ;
 d0_f = sum(diversity_f) / (Nf*Diagonal_Length) ;
 f0_f = mean(fitness_f)  ;
-RF_num = 11 ;RD_num = 11 ;strategy_num = 4 ;
+RF_num = 3 ;RD_num = 3;strategy_num = 4 ;
 q_table_m = zeros(RF_num,RD_num,strategy_num);
 q_table_f = zeros(RF_num,RD_num,strategy_num);
 
-
+rewardss = zeros(T,2);
 
 %% Main loop
 for t = 1:T
-    if t ==699
-        a = 1 ;
-    end
+
     disp(t);
     Temp=exp(-((t)/T));  %eq.(4)
     Q=C1(1,t)*exp(((t-T)/(T)));%eq.(5)
@@ -76,11 +75,28 @@ for t = 1:T
         Trajectories(:,t)=Positions(:,1);
         fitness_history(i,t)=fobj(Positions(i,:));
     end
-    
-    state_m = get_state_0P1(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
-    state_f = get_state_0P1(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
-    action_m = get_action(q_table_m,state_m) ;
-    action_f = get_action(q_table_f,state_f) ;
+    k = 10*(1-2*(t/T)^2);% scaling factor eq.(19)
+    TempXm = ConvexLensImaging(k,Xbest_m,ub,ub1,lb,lb1);
+    fitTemp = fobj(TempXm);
+        if(fitTemp<GYbest)
+            fitnessBest_m=fitTemp ;
+            Xbest_m = TempXm;
+            Xm(BestIndex1,:) = TempXm;
+        end
+        TempXf = ConvexLensImaging(k,Xbest_f,ub,ub1,lb,lb1);
+        fitTemp = fobj(TempXf);
+        if(fitTemp<GYbest)
+            fitnessBest_f=fitTemp ;
+            Xbest_f = TempXf;
+            Xf(BestIndex2,:) = TempXf;
+        end
+    state_m = get_state_3(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
+    state_f = get_state_3(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
+
+    % action_m = get_action(q_table_m,state_m) ;
+    % action_f = get_action(q_table_f,state_f) ;
+    action_m =3;
+    action_f = 3 ;
     if action_m==1
          newXm_dec = exploration_NoFood(Xm,fitness_m,C2(1,t),lb,ub);
     elseif action_m==2
@@ -101,8 +117,10 @@ for t = 1:T
     end
     [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
     [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
-    next_state_m = get_state_0P1(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
-    next_state_f = get_state_0P1(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
+    rewardss(t,1) = reward_m ;
+    rewardss(t,2) = reward_f ;
+    next_state_m = get_state_3(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
+    next_state_f = get_state_3(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
     q_table_m = updataQtable(state_m,action_m,reward_m,next_state_m,q_table_m);
     q_table_f = updataQtable(state_f,action_f,reward_f,next_state_f,q_table_f);
 
@@ -110,8 +128,8 @@ for t = 1:T
     gbest_t(1,t) = GYbest ;
 end
     fval = GYbest;
-    showQ_table(q_table_m);
-    showQ_table(q_table_f);
+    % showQ_table(q_table_m);
+    % showQ_table(q_table_f);
     
 end
 
@@ -160,7 +178,7 @@ function state = get_state(X,fitness,d0,f0,DL)
     end
 end
 
-function state = get_state_0P1(X,fitness,d0,f0,DL)
+function state = get_state_3(X,fitness,d0,f0,DL)
     [N,dim] = size(X) ;
     state = zeros(1,2) ;
     diversity = cal_diversity(X) ;
@@ -168,51 +186,19 @@ function state = get_state_0P1(X,fitness,d0,f0,DL)
     F = mean(fitness)  ;
     RD = D/d0 ;
     RF = F/f0 ;
-    if RD < 0.1
+    if RD < 0.5
         state(1,2) = 1 ;
-    elseif RD < 0.2
-        state(1,2) = 2 ;
-    elseif RD <0.3
-        state(1,2) = 3 ;
-    elseif RD < 0.4
-        state(1,2) = 4 ;
-    elseif RD < 0.5
-        state(1,2) = 5 ;
-    elseif RD < 0.6
-        state(1,2) = 6 ;
-    elseif RD < 0.7
-        state(1,2) = 7 ;
-    elseif RD < 0.8
-        state(1,2) = 8 ;
-    elseif RD < 0.9
-        state(1,2) = 9 ;
     elseif RD < 1
-        state(1,2) = 10 ;
+        state(1,2) = 2 ;
     else
-        state(1,2) = 11 ;
+        state(1,2) = 3;
     end
-    if RF < 0.1
+    if RF < 0.5
         state(1,1) = 1 ;
-    elseif RF < 0.2
-        state(1,1) = 2 ;
-    elseif RF <0.3
-        state(1,1) = 3 ;
-    elseif RF < 0.4
-        state(1,1) = 4 ;
-    elseif RF < 0.5
-        state(1,1) = 5 ;
-    elseif RF < 0.6
-        state(1,1) = 6 ;
-    elseif RF < 0.7
-        state(1,1) = 7 ;
-    elseif RF < 0.8
-        state(1,1) = 8 ;
-    elseif RF < 0.9
-        state(1,1) = 9 ;
     elseif RF < 1
-        state(1,1) = 10 ;
+        state(1,1) = 2 ;
     else
-        state(1,1) = 11 ;
+        state(1,1) = 3;
     end
     
 end

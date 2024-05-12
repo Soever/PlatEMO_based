@@ -1,8 +1,8 @@
 %% RLSO_2
-% state 种群的平均适应度，种群的多样性 11*11
+% state 种群的平均适应度，种群的多样性
 % action so的四个策略 （都执行择优）
 % reward 个体变好 +1 否则-1
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_5(N,T,lb,ub,dim,fobj)
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO3_1(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -56,7 +56,7 @@ d0_m = sum(diversity_m) / (Nm*Diagonal_Length) ;
 f0_m = mean(fitness_m)  ;
 d0_f = sum(diversity_f) / (Nf*Diagonal_Length) ;
 f0_f = mean(fitness_f)  ;
-RF_num = 11 ;RD_num = 11 ;strategy_num = 4 ;
+RF_num = 5 ;RD_num = 5 ;strategy_num = 4 ;
 q_table_m = zeros(RF_num,RD_num,strategy_num);
 q_table_f = zeros(RF_num,RD_num,strategy_num);
 
@@ -77,8 +77,8 @@ for t = 1:T
         fitness_history(i,t)=fobj(Positions(i,:));
     end
     
-    state_m = get_state_0P1(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
-    state_f = get_state_0P1(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
+    state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
+    state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
     action_m = get_action(q_table_m,state_m) ;
     action_f = get_action(q_table_f,state_f) ;
     if action_m==1
@@ -101,18 +101,15 @@ for t = 1:T
     end
     [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
     [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
-    next_state_m = get_state_0P1(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
-    next_state_f = get_state_0P1(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
+    next_state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
+    next_state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
     q_table_m = updataQtable(state_m,action_m,reward_m,next_state_m,q_table_m);
     q_table_f = updataQtable(state_f,action_f,reward_f,next_state_f,q_table_f);
 
-    [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
+    [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
     gbest_t(1,t) = GYbest ;
 end
     fval = GYbest;
-    showQ_table(q_table_m);
-    showQ_table(q_table_f);
-    
 end
 
 function q = updataQtable(s,a,r,s_next,q)
@@ -158,67 +155,10 @@ function state = get_state(X,fitness,d0,f0,DL)
     else
         state(1,1) = 5 ;
     end
-end
+    
 
-function state = get_state_0P1(X,fitness,d0,f0,DL)
-    [N,dim] = size(X) ;
-    state = zeros(1,2) ;
-    diversity = cal_diversity(X) ;
-    D = sum(diversity) / (N*DL) ;
-    F = mean(fitness)  ;
-    RD = D/d0 ;
-    RF = F/f0 ;
-    if RD < 0.1
-        state(1,2) = 1 ;
-    elseif RD < 0.2
-        state(1,2) = 2 ;
-    elseif RD <0.3
-        state(1,2) = 3 ;
-    elseif RD < 0.4
-        state(1,2) = 4 ;
-    elseif RD < 0.5
-        state(1,2) = 5 ;
-    elseif RD < 0.6
-        state(1,2) = 6 ;
-    elseif RD < 0.7
-        state(1,2) = 7 ;
-    elseif RD < 0.8
-        state(1,2) = 8 ;
-    elseif RD < 0.9
-        state(1,2) = 9 ;
-    elseif RD < 1
-        state(1,2) = 10 ;
-    else
-        state(1,2) = 11 ;
-    end
-    if RF < 0.1
-        state(1,1) = 1 ;
-    elseif RF < 0.2
-        state(1,1) = 2 ;
-    elseif RF <0.3
-        state(1,1) = 3 ;
-    elseif RF < 0.4
-        state(1,1) = 4 ;
-    elseif RF < 0.5
-        state(1,1) = 5 ;
-    elseif RF < 0.6
-        state(1,1) = 6 ;
-    elseif RF < 0.7
-        state(1,1) = 7 ;
-    elseif RF < 0.8
-        state(1,1) = 8 ;
-    elseif RF < 0.9
-        state(1,1) = 9 ;
-    elseif RF < 1
-        state(1,1) = 10 ;
-    else
-        state(1,1) = 11 ;
-    end
     
 end
-
-
-
 function Probability = softmax(x)
     % x的size为(1,n)
     % 计算每个元素的指数
@@ -265,7 +205,39 @@ function [X_dec,fitness,reward,next_state]  = act(action,action2,X_dec,X2,fitnes
     X_dec=newX_dec ;
     fitness=fitness_new;
 end
+function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
+    N = size(X,1);
+    fitness_new = zeros(size(fitness));
+    for j=1:N
+        Flag4ub=newX_dec(j,:)>ub;
+        Flag4lb=newX_dec(j,:)<lb;
+        newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
+        fitness_new(j) = feval(fobj,newX_dec(j,:));
+        % 择优
+        if fitness_new(j)  < fitness(j)
+            X(j,:) = newX_dec(j,:) ;
+            fitness(j) = fitness_new(j);
+        end
+    end
+    
+    if min(fitness_new) <min(fitness) 
+        if mean(fitness_new) <mean(fitness)
+            reward = 3;
+        else
+            reward =1 ;
+        end
+    else
+        if mean(fitness_new) <mean(fitness)
+            reward = -1;
+        else
+            reward =-3 ;
+        end
+    end
 
+    % 不择优
+    newX = X;
+    % fitness = fitness_new;
+end
 function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     N = size(X,1);
     for j=1:N
@@ -280,6 +252,25 @@ function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     end
 end
 
+function [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f)
+    [Ybest1,gbest1] = min(fitness_m);
+    [Ybest2,gbest2] = min(fitness_f);
+    if Ybest1<fitnessBest_m
+        Xbest_m = Xm(gbest1,:);
+        fitnessBest_m=Ybest1;
+    end
+    if Ybest2<fitnessBest_f
+        Xbest_f = Xf(gbest2,:);
+        fitnessBest_f=Ybest2;
+    end
+    if fitnessBest_m<fitnessBest_f
+        GYbest=fitnessBest_m;
+        Xfood=Xbest_m;
+    else
+        GYbest=fitnessBest_f;
+        Xfood=Xbest_f;
+    end
+end
 
 function diversity = cal_diversity(X_dec)
     [N,dim] = size(X_dec);

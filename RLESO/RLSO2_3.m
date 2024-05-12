@@ -106,7 +106,7 @@ for t = 1:T
     q_table_m = updataQtable(state_m,action_m,reward_m,next_state_m,q_table_m);
     q_table_f = updataQtable(state_f,action_f,reward_f,next_state_f,q_table_f);
 
-    [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
+    [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
     gbest_t(1,t) = GYbest ;
 end
     fval = GYbest;
@@ -213,39 +213,7 @@ function [X_dec,fitness,reward,next_state]  = act(action,action2,X_dec,X2,fitnes
     X_dec=newX_dec ;
     fitness=fitness_new;
 end
-function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
-    N = size(X,1);
-    fitness_new = zeros(size(fitness));
-    for j=1:N
-        Flag4ub=newX_dec(j,:)>ub;
-        Flag4lb=newX_dec(j,:)<lb;
-        newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
-        fitness_new(j) = feval(fobj,newX_dec(j,:));
-        % 择优
-        if fitness_new(j)  < fitness(j)
-            X(j,:) = newX_dec(j,:) ;
-            fitness(j) = fitness_new(j);
-        end
-    end
-    
-    if min(fitness_new) <min(fitness) 
-        if mean(fitness_new) <mean(fitness)
-            reward = 3;
-        else
-            reward =1 ;
-        end
-    else
-        if mean(fitness_new) <mean(fitness)
-            reward = -1;
-        else
-            reward =-3 ;
-        end
-    end
 
- 
-    newX = X;
-
-end
 function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     N = size(X,1);
     for j=1:N
@@ -260,25 +228,7 @@ function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     end
 end
 
-function [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f)
-    [Ybest1,gbest1] = min(fitness_m);
-    [Ybest2,gbest2] = min(fitness_f);
-    if Ybest1<fitnessBest_m
-        Xbest_m = Xm(gbest1,:);
-        fitnessBest_m=Ybest1;
-    end
-    if Ybest2<fitnessBest_f
-        Xbest_f = Xf(gbest2,:);
-        fitnessBest_f=Ybest2;
-    end
-    if fitnessBest_m<fitnessBest_f
-        GYbest=fitnessBest_m;
-        Xfood=Xbest_m;
-    else
-        GYbest=fitnessBest_f;
-        Xfood=Xbest_f;
-    end
-end
+
 
 function diversity = cal_diversity(X_dec)
     [N,dim] = size(X_dec);
