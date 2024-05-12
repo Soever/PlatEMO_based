@@ -64,9 +64,6 @@ q_table_f = zeros(RF_num,RD_num,strategy_num);
 
 %% Main loop
 for t = 1:T
-    if t ==699
-        a = 1 ;
-    end
     disp(t);
     Temp=exp(-((t)/T));  %eq.(4)
     Q=C1(1,t)*exp(((t-T)/(T)));%eq.(5)
@@ -106,7 +103,7 @@ for t = 1:T
     q_table_m = updataQtable(state_m,action_m,reward_m,next_state_m,q_table_m);
     q_table_f = updataQtable(state_f,action_f,reward_f,next_state_f,q_table_f);
 
-    [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
+    [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
     gbest_t(1,t) = GYbest ;
 end
     fval = GYbest;
@@ -247,25 +244,6 @@ function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     end
 end
 
-function [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f)
-    [Ybest1,gbest1] = min(fitness_m);
-    [Ybest2,gbest2] = min(fitness_f);
-    if Ybest1<fitnessBest_m
-        Xbest_m = Xm(gbest1,:);
-        fitnessBest_m=Ybest1;
-    end
-    if Ybest2<fitnessBest_f
-        Xbest_f = Xf(gbest2,:);
-        fitnessBest_f=Ybest2;
-    end
-    if fitnessBest_m<fitnessBest_f
-        GYbest=fitnessBest_m;
-        Xfood=Xbest_m;
-    else
-        GYbest=fitnessBest_f;
-        Xfood=Xbest_f;
-    end
-end
 
 function diversity = cal_diversity(X_dec)
     [N,dim] = size(X_dec);

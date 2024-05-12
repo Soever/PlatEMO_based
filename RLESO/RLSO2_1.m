@@ -61,13 +61,9 @@ q_table_m = zeros(RF_num,RD_num,strategy_num);
 q_table_f = zeros(RF_num,RD_num,strategy_num);
 
 
-
+rewardss = zeros(1,T);
 %% Main loop
 for t = 1:T
-    if t ==699
-        a = 1 ;
-    end
-    disp(t);
     Temp=exp(-((t)/T));  %eq.(4)
     Q=C1(1,t)*exp(((t-T)/(T)));%eq.(5)
     Positions=[Xm;Xf];
@@ -76,11 +72,13 @@ for t = 1:T
         Trajectories(:,t)=Positions(:,1);
         fitness_history(i,t)=fobj(Positions(i,:));
     end
-    
+    %% get state AND action
     state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
     state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
     action_m = get_action(q_table_m,state_m) ;
     action_f = get_action(q_table_f,state_f) ;
+    %% act
+    
     if action_m==1
          newXm_dec = exploration_NoFood(Xm,fitness_m,C2(1,t),lb,ub);
     elseif action_m==2
@@ -99,14 +97,17 @@ for t = 1:T
     else
         [~, newXf_dec] = so_mating(Xm,Xf,fitness_m,fitness_f,C3(1,t),Q,lb,ub);
     end
+    %% next state
     [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
     [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
+    rewardss(1,t) =reward_m;
     next_state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
     next_state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
+    %% update q_table
     q_table_m = updataQtable(state_m,action_m,reward_m,next_state_m,q_table_m);
     q_table_f = updataQtable(state_f,action_f,reward_f,next_state_f,q_table_f);
-
-    [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
+    %% update history
+    [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
     gbest_t(1,t) = GYbest ;
 end
     fval = GYbest;
@@ -205,39 +206,7 @@ function [X_dec,fitness,reward,next_state]  = act(action,action2,X_dec,X2,fitnes
     X_dec=newX_dec ;
     fitness=fitness_new;
 end
-function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
-    N = size(X,1);
-    fitness_new = zeros(size(fitness));
-    for j=1:N
-        Flag4ub=newX_dec(j,:)>ub;
-        Flag4lb=newX_dec(j,:)<lb;
-        newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
-        fitness_new(j) = feval(fobj,newX_dec(j,:));
-        % 择优
-        if fitness_new(j)  < fitness(j)
-            X(j,:) = newX_dec(j,:) ;
-            fitness(j) = fitness_new(j);
-        end
-    end
-    
-    if min(fitness_new) <min(fitness) 
-        if mean(fitness_new) <mean(fitness)
-            reward = 3;
-        else
-            reward =1 ;
-        end
-    else
-        if mean(fitness_new) <mean(fitness)
-            reward = -1;
-        else
-            reward =-3 ;
-        end
-    end
 
-    % 不择优
-    newX = X;
-    % fitness = fitness_new;
-end
 function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     N = size(X,1);
     for j=1:N
@@ -252,25 +221,6 @@ function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
     end
 end
 
-function [Xbest_m,Xbest_f,fitness_m,fitness_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f)
-    [Ybest1,gbest1] = min(fitness_m);
-    [Ybest2,gbest2] = min(fitness_f);
-    if Ybest1<fitnessBest_m
-        Xbest_m = Xm(gbest1,:);
-        fitnessBest_m=Ybest1;
-    end
-    if Ybest2<fitnessBest_f
-        Xbest_f = Xf(gbest2,:);
-        fitnessBest_f=Ybest2;
-    end
-    if fitnessBest_m<fitnessBest_f
-        GYbest=fitnessBest_m;
-        Xfood=Xbest_m;
-    else
-        GYbest=fitnessBest_f;
-        Xfood=Xbest_f;
-    end
-end
 
 function diversity = cal_diversity(X_dec)
     [N,dim] = size(X_dec);

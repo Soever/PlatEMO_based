@@ -1,8 +1,8 @@
 %% RLSO_2
-% state 种群的平均适应度，种群的多样性
+% state 种群的平均适应度，种群的多样性 11*11
 % action so的四个策略 （都执行择优）
 % reward 个体变好 +1 否则-1
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_3(N,T,lb,ub,dim,fobj)
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_5(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -56,7 +56,7 @@ d0_m = sum(diversity_m) / (Nm*Diagonal_Length) ;
 f0_m = mean(fitness_m)  ;
 d0_f = sum(diversity_f) / (Nf*Diagonal_Length) ;
 f0_f = mean(fitness_f)  ;
-RF_num = 5 ;RD_num = 5 ;strategy_num = 4 ;
+RF_num = 11 ;RD_num = 11 ;strategy_num = 4 ;
 q_table_m = zeros(RF_num,RD_num,strategy_num);
 q_table_f = zeros(RF_num,RD_num,strategy_num);
 
@@ -77,10 +77,10 @@ for t = 1:T
         fitness_history(i,t)=fobj(Positions(i,:));
     end
     
-    state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
-    state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
-    action_m = get_action_epi(q_table_m,state_m) ;
-    action_f = get_action_epi(q_table_f,state_f) ;
+    state_m = get_state_0P1(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
+    state_f = get_state_0P1(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
+    action_m = get_action(q_table_m,state_m) ;
+    action_f = get_action(q_table_f,state_f) ;
     if action_m==1
          newXm_dec = exploration_NoFood(Xm,fitness_m,C2(1,t),lb,ub);
     elseif action_m==2
@@ -101,8 +101,8 @@ for t = 1:T
     end
     [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
     [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
-    next_state_m = get_state(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
-    next_state_f = get_state(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
+    next_state_m = get_state_0P1(Xm,fitness_m,d0_m,f0_m,Diagonal_Length);
+    next_state_f = get_state_0P1(Xf,fitness_f,d0_f,f0_f,Diagonal_Length);
     q_table_m = updataQtable(state_m,action_m,reward_m,next_state_m,q_table_m);
     q_table_f = updataQtable(state_f,action_f,reward_f,next_state_f,q_table_f);
 
@@ -110,6 +110,9 @@ for t = 1:T
     gbest_t(1,t) = GYbest ;
 end
     fval = GYbest;
+    showQ_table(q_table_m);
+    showQ_table(q_table_f);
+    
 end
 
 function q = updataQtable(s,a,r,s_next,q)
@@ -123,15 +126,7 @@ function action = get_action(q_table,state)
     Probability = softmax(actions);
     action= randsample(1:length(Probability), 1, true, Probability );
 end
-function action = get_action_epi(q_table,state)
-    actions = q_table(state(1),state(2),:);
-    if rand <  0.3
-        action = randi(length(actions));  
-    else
-        maxIndices = find(actions == max(actions));
-        action = maxIndices(randi(length(maxIndices)));
-    end
-end
+
 function state = get_state(X,fitness,d0,f0,DL)
     [N,dim] = size(X) ;
     state = zeros(1,2) ;
@@ -163,10 +158,67 @@ function state = get_state(X,fitness,d0,f0,DL)
     else
         state(1,1) = 5 ;
     end
-    
+end
 
+function state = get_state_0P1(X,fitness,d0,f0,DL)
+    [N,dim] = size(X) ;
+    state = zeros(1,2) ;
+    diversity = cal_diversity(X) ;
+    D = sum(diversity) / (N*DL) ;
+    F = mean(fitness)  ;
+    RD = D/d0 ;
+    RF = F/f0 ;
+    if RD < 0.1
+        state(1,2) = 1 ;
+    elseif RD < 0.2
+        state(1,2) = 2 ;
+    elseif RD <0.3
+        state(1,2) = 3 ;
+    elseif RD < 0.4
+        state(1,2) = 4 ;
+    elseif RD < 0.5
+        state(1,2) = 5 ;
+    elseif RD < 0.6
+        state(1,2) = 6 ;
+    elseif RD < 0.7
+        state(1,2) = 7 ;
+    elseif RD < 0.8
+        state(1,2) = 8 ;
+    elseif RD < 0.9
+        state(1,2) = 9 ;
+    elseif RD < 1
+        state(1,2) = 10 ;
+    else
+        state(1,2) = 11 ;
+    end
+    if RF < 0.1
+        state(1,1) = 1 ;
+    elseif RF < 0.2
+        state(1,1) = 2 ;
+    elseif RF <0.3
+        state(1,1) = 3 ;
+    elseif RF < 0.4
+        state(1,1) = 4 ;
+    elseif RF < 0.5
+        state(1,1) = 5 ;
+    elseif RF < 0.6
+        state(1,1) = 6 ;
+    elseif RF < 0.7
+        state(1,1) = 7 ;
+    elseif RF < 0.8
+        state(1,1) = 8 ;
+    elseif RF < 0.9
+        state(1,1) = 9 ;
+    elseif RF < 1
+        state(1,1) = 10 ;
+    else
+        state(1,1) = 11 ;
+    end
     
 end
+
+
+
 function Probability = softmax(x)
     % x的size为(1,n)
     % 计算每个元素的指数
@@ -227,7 +279,6 @@ function [X,fitness] = Evaluation(X,newX_dec,fitness,lb,ub,fobj)
         end
     end
 end
-
 
 
 function diversity = cal_diversity(X_dec)

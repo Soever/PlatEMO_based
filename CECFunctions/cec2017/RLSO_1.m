@@ -1,7 +1,7 @@
 clear all ;
 clc
 
-runs = 100 ;
+runs = 50;
 T = 500 ;
 N = 50 ;
 dim =10 ;
