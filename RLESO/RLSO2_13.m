@@ -2,8 +2,11 @@
 % state >mean(fitness),kean(decs)
 % action so的四个策略 （都执行择优）
 % reward 
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_11(N,T,lb,ub,dim,fobj)
-
+function [fval,Xfood,gbest_t] = RLSO2_13(N,T,lb,ub,dim,fobj,fhd,Bm)
+addpath './so_strategies';
+addpath './state';
+addpath './utils';
+addpath './mutation_strategy';
 %% initial
 
 Threshold=0.25;
@@ -26,7 +29,11 @@ end
 X=lb+rand(N,dim)*(ub-lb);%eq.(1)
 fitness=zeros(1,N);
 for i=1:N
-    fitness(i)=feval(fobj,X(i,:));
+    if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
+       fitness(i)=feval(fhd, X(i,:)',fobj);
+    else %% Twenty-Three standard test functions
+       fitness(i)=fobj(X(i,:));
+    end
 end
 Trajectories=zeros(N,T);
 position_history=zeros(N,T,dim);
@@ -44,16 +51,16 @@ fitness_m=fitness(1:Nm);fitness_f=fitness(Nm+1:N);
 
 [fitnessBest_m, gbest1] = min(fitness_m);Xbest_m = Xm(gbest1,:);
 [fitnessBest_f, gbest2] = min(fitness_f);Xbest_f = Xf(gbest2,:);
-BestIndex1=gbest1; BestIndex2=gbest2;
+% BestIndex1=gbest1; BestIndex2=gbest2;
 %% state
-fitness_average_t = zeros(2,T) ;
-diversity_average_t = zeros(2,T) ;
-Diagonal_Length = sqrt(sum((ub2  - lb2 ).^2));
+% fitness_average_t = zeros(2,T) ;
+% diversity_average_t = zeros(2,T) ;
+% Diagonal_Length = sqrt(sum((ub2  - lb2 ).^2));
 k = N/10 ;
-d0_m = get_neighbor_diversity(Xm,k,Diagonal_Length) ;
-d0_f = get_neighbor_diversity(Xf,k,Diagonal_Length) ;
-f0_m = fitness_m ;
-f0_f = fitness_f ;
+% d0_m = get_neighbor_diversity(Xm,k,Diagonal_Length) ;
+% d0_f = get_neighbor_diversity(Xf,k,Diagonal_Length) ;
+% f0_m = fitness_m ;
+% f0_f = fitness_f ;
 
 RF_num = 5 ;RD_num =5;strategy_num = 4 ;
 q_table_m = zeros(RF_num,RD_num,strategy_num);
@@ -70,11 +77,15 @@ for t = 1:T
     for i=1:size(Positions,1)
         position_history(i,t,:)=Positions(i,:);
         Trajectories(:,t)=Positions(:,1);
-        fitness_history(i,t)=fobj(Positions(i,:));
+        if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
+            fitness_history(i,t)=feval(fhd, Positions(i,:)',fobj);
+        else %% Twenty-Three standard test functions
+            fitness_history(i,t)=fobj(Positions(i,:));
+        end
     end
 
-    state_m = get_state_knn(Xm,fitness_m,Diagonal_Length,k);
-    state_f = get_state_knn(Xf,fitness_f,Diagonal_Length,k);
+    state_m = get_state_knn(Xm,fitness_m,k);
+    state_f = get_state_knn(Xf,fitness_f,k);
     action_m = get_action(q_table_m,state_m) ;
     action_f = get_action(q_table_f,state_f) ;
     
@@ -103,10 +114,10 @@ for t = 1:T
             [~, newXf_dec(i,:)] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
         end
     end
-    [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
-    [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
-    next_state_m = get_state_knn(Xm,fitness_m,Diagonal_Length,k);
-    next_state_f = get_state_knn(Xf,fitness_f,Diagonal_Length,k);
+    [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj,fhd,Bm);
+    [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj,fhd,Bm);
+    next_state_m = get_state_knn(Xm,fitness_m,k);
+    next_state_f = get_state_knn(Xf,fitness_f,k);
     for i =1:Nm
         q_table_m = updataQtable(state_m(i,:),action_m(i),reward_m(i),next_state_m(i,:),q_table_m);
     end
@@ -142,13 +153,15 @@ end
 
 
 
-function state = get_state_knn(X,fitness,DL,k)
+function state = get_state_knn(X,fitness,k)
     [N,~] = size(X) ;
     state = zeros(N,2) ;
-    D =get_neighbor_diversity(X,k,DL);
-    
+    D =get_neighbor_diversity(X,k);
+    ub2 = max(X);
+    lb2 = min(X);
+    DL = sqrt(sum((ub2  - lb2 ).^2));
     F = fitness ;
-    popD  = sum(cal_diversity(X)) / (N*DL) ;
+    popD  = sum(cal_diversity(X)) / (N*(DL+1e-160)) ;
     popF  = mean(F) ;
     % 种群丰富度可能=0
 
@@ -165,37 +178,40 @@ function state = get_state_knn(X,fitness,DL,k)
     else
         RFs = F'./popF ;
     end
-    
-    state(RDs < 0.3, 2) = 1;
-    state(RDs >= 0.3 & RDs < 0.6, 2) = 2;
-    state(RDs >= 0.6 & RDs < 1, 2) = 3;
-    state(RDs >= 1 & RDs < 1.3, 2) = 4;
-    state(RDs >= 1.3, 2) = 5;
+    RDs = mapminmax(RDs',0,1);
+    RFs = mapminmax(RFs',0,1);
+    state(RDs < 0.2, 2) = 1;
+    state(RDs >= 0.2 & RDs < 0.4, 2) = 2;
+    state(RDs >= 0.4 & RDs < 0.6, 2) = 3;
+    state(RDs >= 0.6 & RDs < 0.8, 2) = 4;
+    state(RDs >= 0.8, 2) = 5;
     
    
-    state(RFs < 0.3, 1) = 1;
-    state(RFs >= 0.3 & RFs < 0.5, 1) = 2;
-    state(RFs >= 0.5 & RFs < 0.7, 1) = 3;
-    state(RFs >= 0.7 & RFs <= 1, 1) = 4;
-    state(RFs > 1, 1) = 5;
-
-
+    state(RFs < 0.2, 1) = 1;
+    state(RFs >= 0.2 & RFs < 0.4, 1) = 2;
+    state(RFs >= 0.4 & RFs < 0.6, 1) = 3;
+    state(RFs >= 0.6 & RFs <= 0.8, 1) = 4;
+    state(RFs > 0.8, 1) = 5;
 end
 
-function neighbor_diversities =get_neighbor_diversity(X,k,DL)
+function neighbor_diversities =get_neighbor_diversity(X,k)
     [N,dim] = size(X) ;
-    nearest_indices_all = zeros(N, k+1);
+%     nearest_indices_all = zeros(N, k+1);
+    [nearest_indices_all,~] = knnsearch(X,X,'k',k+1);
     % 遍历每个个体
-    for i = 1:N
-        % 使用 knnsearch 函数找到每个个体最近的 k 个个体的索引
-        nearest_indices = knnsearch(X, X(i, :), 'K', k+1); % +1 是因为包含了自身
-        % 将最近的 k 个个体的索引存储到矩阵中
-        nearest_indices_all(i, :) = nearest_indices;
-    end
+%     for i = 1:N
+%         % 使用 knnsearch 函数找到每个个体最近的 k 个个体的索引
+%         nearest_indices = knnsearch(X, X(i, :), 'K', k+1); % +1 是因为包含了自身#问题1：knnsearch可以直接获取每个个体对应的近邻，不需要放到循环里
+%         % 将最近的 k 个个体的索引存储到矩阵中
+%         nearest_indices_all(i, :) = nearest_indices;
+%     end
     neighbor_diversities = zeros(N,1);
     for i = 1:N
         neighbor_dec = X(nearest_indices_all(i,:),:) ;
-        neighbor_diversities(i) =sum(cal_diversity(neighbor_dec))/((k+1)*DL) ;
+        ub2 = max(neighbor_dec);
+        lb2 = min(neighbor_dec);
+        Diagonal_Length = sqrt(sum((ub2  - lb2 ).^2));
+        neighbor_diversities(i) =sum(cal_diversity(neighbor_dec))/((k+1)*(Diagonal_Length+1e-160)) ;%要取独立的DL
     end
 end
 
@@ -234,7 +250,7 @@ function [X_dec,fitness,reward,next_state]  = act(action,action2,X_dec,X2,fitnes
     X_dec=newX_dec ;
     fitness=fitness_new;
 end
-function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
+function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj,fhd,Bm)
     N = size(X,1);
     fitness_new = zeros(size(fitness));
     fitness_old = fitness ;
@@ -243,7 +259,12 @@ function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj
         Flag4ub=newX_dec(j,:)>ub;
         Flag4lb=newX_dec(j,:)<lb;
         newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
-        fitness_new(j) = feval(fobj,newX_dec(j,:));
+       if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
+       fitness_new(j)=feval(fhd, newX_dec(j,:)',fobj);
+        else %% Twenty-Three standard test functions
+       fitness_new(j)=fobj(newX_dec(j,:));
+       end
+%         fitness_new(j) = feval(fobj,newX_dec(j,:));
         % 择优
         if fitness_new(j)  < fitness(j)
             X(j,:) = newX_dec(j,:) ;
@@ -283,6 +304,6 @@ function diversity = cal_diversity(X_dec)
             d_ind = d_ind+(X_dec(i,j) - x_mean(1,j))^2; 
         end
         d_pop  = d_pop + d_ind  ;
-        diversity(i,1) = d_pop ;
+        diversity(i,1) = sqrt(d_pop) ;
     end
 end
