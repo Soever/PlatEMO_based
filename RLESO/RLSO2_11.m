@@ -2,7 +2,7 @@
 % state >mean(fitness),kean(decs)
 % action so的四个策略 （都执行择优）
 % reward 
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_10(N,T,lb,ub,dim,fobj)
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = RLSO2_11(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -92,6 +92,7 @@ for t = 1:T
             newXm_dec(i,:) = newXm_dec_;
         end
     end
+    
     for i = 1: Nf
         if action_f(i)==1
              newXf_dec(i,:) = exploration_NoFood(Xf(i,:),fitness_f(i),C2(1,t),lb,ub);
@@ -107,6 +108,8 @@ for t = 1:T
     [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
     next_state_m = get_state_knn(Xm,fitness_m,Diagonal_Length,k);
     next_state_f = get_state_knn(Xf,fitness_f,Diagonal_Length,k);
+    
+   
     for i =1:Nm
         q_table_m = updataQtable(state_m(i,:),action_m(i),reward_m(i),next_state_m(i,:),q_table_m);
     end
@@ -114,13 +117,12 @@ for t = 1:T
         q_table_f = updataQtable(state_f(i,:),action_f(i),reward_f(i),next_state_f(i,:),q_table_f);
     end
     
-
     [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
     gbest_t(1,t) = GYbest ;
 end
     fval = GYbest;
-    showQ_table(q_table_m);
-    showQ_table(q_table_f);
+    % showQ_table(q_table_m);
+    % showQ_table(q_table_f);
     
 end
 
@@ -150,8 +152,17 @@ function state = get_state_knn(X,fitness,DL,k)
     F = fitness ;
     popD  = sum(cal_diversity(X)) / (N*DL) ;
     popF  = mean(F) ;
-    RDs = D./popD;
-    RFs = F./popF ;
+    
+    if popD  == 0 
+        RDs = zeros(size(D));
+    else
+       RDs = D./popD;
+    end
+    if popF == 0 
+        RFs = zeros(size(F'));
+    else
+        RFs = F'./popF ;
+    end
     % Determine states based on RDs
     state(RDs < 0.3, 2) = 1;
     state(RDs >= 0.3 & RDs < 0.6, 2) = 2;
@@ -166,6 +177,9 @@ function state = get_state_knn(X,fitness,DL,k)
     state(RFs >= 0.7 & RFs <= 1, 1) = 4;
     state(RFs > 1, 1) = 5;
 
+    if any(state(:)==0) ==1
+        a = 0 ;
+    end
 
 end
 
