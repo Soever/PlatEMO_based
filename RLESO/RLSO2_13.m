@@ -2,11 +2,8 @@
 % state >mean(fitness),kean(decs)
 % action so的四个策略 （都执行择优）
 % reward 
-function [fval,Xfood,gbest_t] = RLSO2_13(N,T,lb,ub,dim,fobj,fhd,Bm)
-addpath './so_strategies';
-addpath './state';
-addpath './utils';
-addpath './mutation_strategy';
+function [Xfood,fval,gbest_t] = RLSO2_13(N,T,lb,ub,dim,fobj)
+
 %% initial
 
 Threshold=0.25;
@@ -29,11 +26,7 @@ end
 X=lb+rand(N,dim)*(ub-lb);%eq.(1)
 fitness=zeros(1,N);
 for i=1:N
-    if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
-       fitness(i)=feval(fhd, X(i,:)',fobj);
-    else %% Twenty-Three standard test functions
        fitness(i)=fobj(X(i,:));
-    end
 end
 Trajectories=zeros(N,T);
 position_history=zeros(N,T,dim);
@@ -77,11 +70,8 @@ for t = 1:T
     for i=1:size(Positions,1)
         position_history(i,t,:)=Positions(i,:);
         Trajectories(:,t)=Positions(:,1);
-        if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
-            fitness_history(i,t)=feval(fhd, Positions(i,:)',fobj);
-        else %% Twenty-Three standard test functions
-            fitness_history(i,t)=fobj(Positions(i,:));
-        end
+        fitness_history(i,t)=fobj(Positions(i,:));
+        
     end
 
     state_m = get_state_knn(Xm,fitness_m,k);
@@ -114,8 +104,8 @@ for t = 1:T
             [~, newXf_dec(i,:)] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
         end
     end
-    [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj,fhd,Bm);
-    [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj,fhd,Bm);
+    [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
+    [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
     next_state_m = get_state_knn(Xm,fitness_m,k);
     next_state_f = get_state_knn(Xf,fitness_f,k);
     for i =1:Nm
@@ -250,7 +240,7 @@ function [X_dec,fitness,reward,next_state]  = act(action,action2,X_dec,X2,fitnes
     X_dec=newX_dec ;
     fitness=fitness_new;
 end
-function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj,fhd,Bm)
+function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
     N = size(X,1);
     fitness_new = zeros(size(fitness));
     fitness_old = fitness ;
@@ -259,11 +249,8 @@ function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj
         Flag4ub=newX_dec(j,:)>ub;
         Flag4lb=newX_dec(j,:)<lb;
         newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
-       if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
-       fitness_new(j)=feval(fhd, newX_dec(j,:)',fobj);
-        else %% Twenty-Three standard test functions
        fitness_new(j)=fobj(newX_dec(j,:));
-       end
+   
 %         fitness_new(j) = feval(fobj,newX_dec(j,:));
         % 择优
         if fitness_new(j)  < fitness(j)
