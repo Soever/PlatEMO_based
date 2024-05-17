@@ -3,10 +3,10 @@ clc
 
 runs = 30 ;
 T = 500 ;
-N = 100 ;
-dim =20 ;
+N = 50;
+dim =10 ; % 10 20
 function_num = 10 ;
-result = zeros(function_num,3) ;
+result = zeros(function_num,4) ;
 fval1 = zeros(runs,function_num) ;
 fval2 = zeros(runs,function_num) ;
 fval3 = zeros(runs,function_num) ;
@@ -27,9 +27,9 @@ for i=1:function_num
     end
     
 end
-result(i,1)=mean(fval1,1);
-result(i,2)=mean(fval2,1);
-result(i,3)=mean(fval3,1);
-result(i,4)=mean(fval4,1);
+result(:,1)=mean(fval1,1);
+result(:,2)=mean(fval2,1);
+result(:,3)=mean(fval3,1);
+result(:,4)=mean(fval4,1);
 
 disp(result)
