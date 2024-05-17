@@ -6,7 +6,7 @@ N=30;
 
 % pool = parpool;
 % 
-Function_name='F5';
+Function_name='F1';
 [lb,ub,dim,fobj]=Get_Functions_details(Function_name);
 
 results1= zeros(runs);
@@ -14,25 +14,10 @@ results2= zeros(runs);
  a = [1,2,3,4];
 
  T=1000; 
-%[Xfood, fval2,Convergence_curve,Trajectories,fitness_history, position_history]=ESO_Algorithm(N,T,lb,ub,dim,fobj,a);
-% [Best_pos,Best_score,SO_curve]=ESO_Algorithm(N,T,lb,ub,dim,fobj,[2,4]); 
 [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=RLESO(N,T,lb,ub,dim,fobj,0); 
 [Best_pos,Best_score,SO_curve]=SO(N,T,lb,ub,dim,fobj); 
  
-%[Best_pos,Best_score,SO_curve]=SO(N,T,lb,ub,dim,fobj); 
-% [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=ESO_Algorithm(N,T,lb,ub,dim,fobj); 
-% parfor i=1:runs
-%     [Xfood, fval,Convergence_curve,Trajectories,fitness_history, position_history]=ESO(N,T,lb,ub,dim,fobj); %¿ªÊ¼ÓÅ»¯
-%     [Best_pos,Best_score,SO_curve]=SO(N,T,lb,ub,dim,fobj);
-%     results1(i) = Best_score ;
-%     results2(i) = fval ;
-% end
-% 
-% resMean = mean(results1);
-% resStd  = std(results1);
-% 
-% resMean2 = mean(results2);
-% resStd2  = std(results2);
+
  figure('Position',[39         479        1727         267])
 color1 = [205 205 0];
 color2 = [139 101 8];

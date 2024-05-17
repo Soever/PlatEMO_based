@@ -9,6 +9,7 @@ Thresold2= 0.6;
 C1=0.5*ones(1,T);
 C2=0.05*ones(1,T);
 C3=2*ones(1,T);
+
 if any(stage== 1)
     [C1,C2,C3] = DynamicUpdate(C1,C2,C3) ;
 end
@@ -123,7 +124,7 @@ for t = 1:T
                 end
             end
         else %cold
-            if rand>0.6 %fight
+            if rand>1 %fight
                 for i=1:Nm
                     for j=1:1:dim
                         FM=exp(-(fitnessBest_f)/(fitness_m(i)+eps));
