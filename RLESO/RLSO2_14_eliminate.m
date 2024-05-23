@@ -2,10 +2,13 @@
 % state >mean(fitness),kean(decs)
 % action so的四个策略 （都执行择优）
 % reward 
-function [Xfood,fval,gbest_t] = RLSO2_13(N,T,lb,ub,dim,fobj)
-
+function [fval,Xfood,gbest_t] = RLSO2_14_eliminate(N,T,lb,ub,dim,fobj,fhd,Bm)
+addpath './so_strategies';
+addpath './state';
+addpath './utils';
+addpath './mutation_strategy';
 %% initial
-
+vec_flag=[1,-1];
 Threshold=0.25;
 Thresold2= 0.6;
 C1=0.5*ones(1,T);
@@ -26,7 +29,11 @@ end
 X=lb+rand(N,dim)*(ub-lb);%eq.(1)
 fitness=zeros(1,N);
 for i=1:N
+    if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
+       fitness(i)=feval(fhd, X(i,:)',fobj);
+    else %% Twenty-Three standard test functions
        fitness(i)=fobj(X(i,:));
+    end
 end
 Trajectories=zeros(N,T);
 position_history=zeros(N,T,dim);
@@ -49,7 +56,7 @@ fitness_m=fitness(1:Nm);fitness_f=fitness(Nm+1:N);
 % fitness_average_t = zeros(2,T) ;
 % diversity_average_t = zeros(2,T) ;
 % Diagonal_Length = sqrt(sum((ub2  - lb2 ).^2));
-k = N/10 ;
+k = N/5 ;
 % d0_m = get_neighbor_diversity(Xm,k,Diagonal_Length) ;
 % d0_f = get_neighbor_diversity(Xf,k,Diagonal_Length) ;
 % f0_m = fitness_m ;
@@ -57,7 +64,7 @@ k = N/10 ;
 
 RF_num = 5 ;RD_num =5;strategy_num = 4 ;
 q_table_m = zeros(RF_num,RD_num,strategy_num);
-q_table_f = zeros(RF_num,RD_num,strategy_num);
+% q_table_f = zeros(RF_num,RD_num,strategy_num);
 
 
 
@@ -70,14 +77,17 @@ for t = 1:T
     for i=1:size(Positions,1)
         position_history(i,t,:)=Positions(i,:);
         Trajectories(:,t)=Positions(:,1);
-        fitness_history(i,t)=fobj(Positions(i,:));
-        
+        if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
+            fitness_history(i,t)=feval(fhd, Positions(i,:)',fobj);
+        else %% Twenty-Three standard test functions
+            fitness_history(i,t)=fobj(Positions(i,:));
+        end
     end
 
     state_m = get_state_knn(Xm,fitness_m,k);
-    state_f = get_state_knn(Xf,fitness_f,k);
+%     state_f = get_state_knn(Xf,fitness_f,k);
     action_m = get_action(q_table_m,state_m) ;
-    action_f = get_action(q_table_f,state_f) ;
+%     action_f = get_action(q_table_f,state_f) ;
     
     newXm_dec = zeros(size(Xm));
     newXf_dec = zeros(size(Xf));
@@ -93,27 +103,62 @@ for t = 1:T
             newXm_dec(i,:) = newXm_dec_;
         end
     end
-    for i = 1: Nf
-        if action_f(i)==1
-             newXf_dec(i,:) = exploration_NoFood(Xf(i,:),fitness_f(i),C2(1,t),lb,ub);
-        elseif action_f(i)==2
-             newXf_dec(i,:) = exploit_Food(Xf(i,:),Xfood,Temp,C3(1,t));
-        elseif action_f(i)==3 
-            newXf_dec(i,:) = so_fight(Xf(i,:),fitness_f(i),Xbest_m,fitnessBest_m,t1(1,t),C3(1,t),Q) ;
-        else
-            [~, newXf_dec(i,:)] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
+if Q<Threshold
+    for i=1:Nf
+        for j=1:1:dim
+            rand_leader_index = floor(Nf*rand()+1);
+            X_randf = Xf(rand_leader_index, :);
+            flag_index = floor(2*rand()+1);
+            Flag=vec_flag(flag_index);
+            Af=exp(-fitness_f(rand_leader_index)/(fitness_f(i)+eps));%eq.(9)
+            newXf_dec(i,j)=X_randf(j)+Flag*C2(1,t)*Af*((ub-lb)*rand+lb);%eq.(8)
         end
     end
-    [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
-    [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
+else %Exploitation Phase (Food Exists)
+    if Temp>Thresold2  %hot
+        for i=1:Nf
+            flag_index = floor(2*rand()+1);
+            Flag=vec_flag(flag_index);
+            for j=1:1:dim
+                newXf_dec(i,j)=Xfood(j)+Flag*C3(1,t)*Temp*rand*(Xfood(j)-Xf(i,j));%eq.(10)
+            end
+        end
+    else %cold
+        if rand>0.6 %fight
+            for i=1:Nf
+                for j=1:1:dim
+                    FF=exp(-(fitnessBest_m)/(fitness_f(i)+eps));%eq.(14)
+                    newXf_dec(i,j)=Xf(i,j)+C3(1,t)*FF*rand*(Q*Xbest_m(j)-Xf(i,j));%eq.(12)
+                end
+            end
+        else%mating
+            for i=1:Nf
+                for j=1:1:dim
+                    Mf=exp(-fitness_m(i)/(fitness_f(i)+eps));%eq.(18)
+                    newXf_dec(i,j)=Xf(i,j) +C3(1,t)*rand*Mf*(Q*Xm(i,j)-Xf(i,j));%eq.(16)
+                end
+            end
+            flag_index = floor(2*rand()+1);
+            egg=vec_flag(flag_index);
+            if egg==1;
+                [GYworst, gworst] = max(fitness_m);
+                newXm_dec(gworst,:)=lb+rand*(ub-lb);%eq.(19)
+                [GYworst, gworst] = max(fitness_f);
+                newXf_dec(gworst,:)=lb+rand*(ub-lb);%eq.(20)
+            end
+        end
+    end
+end
+    [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj,fhd,Bm);
+    [Xf,fitness_f,~] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj,fhd,Bm);
     next_state_m = get_state_knn(Xm,fitness_m,k);
-    next_state_f = get_state_knn(Xf,fitness_f,k);
+%     next_state_f = get_state_knn(Xf,fitness_f,k);
     for i =1:Nm
         q_table_m = updataQtable(state_m(i,:),action_m(i),reward_m(i),next_state_m(i,:),q_table_m);
     end
-    for i =1:Nf
-        q_table_f = updataQtable(state_f(i,:),action_f(i),reward_f(i),next_state_f(i,:),q_table_f);
-    end
+%     for i =1:Nf
+%         q_table_f = updataQtable(state_f(i,:),action_f(i),reward_f(i),next_state_f(i,:),q_table_f);
+%     end
     
 
     [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
@@ -153,7 +198,7 @@ function state = get_state_knn(X,fitness,k)
     F = fitness ;
     popD  = sum(cal_diversity(X)) / (N*(DL+1e-160)) ;
     popF  = mean(F) ;
-    % 种群丰富度可能=0 
+    % 种群丰富度可能=0
 
     
     if popD  == 0 
@@ -240,17 +285,19 @@ function [X_dec,fitness,reward,next_state]  = act(action,action2,X_dec,X2,fitnes
     X_dec=newX_dec ;
     fitness=fitness_new;
 end
-function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj)
+function [newX,fitness,reward] = Evaluation_reward(X,newX_dec,fitness,lb,ub,fobj,fhd,Bm)
     N = size(X,1);
     fitness_new = zeros(size(fitness));
-    fitness_old = fitness ;
     reward = -1*ones(N,1) ;
     for j=1:N
         Flag4ub=newX_dec(j,:)>ub;
         Flag4lb=newX_dec(j,:)<lb;
         newX_dec(j,:)=(newX_dec(j,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
+       if (Bm>=1) %% Test suites of CEC-2014, CEC-2017, CEC-2020, and CEC-2022
+       fitness_new(j)=feval(fhd, newX_dec(j,:)',fobj);
+        else %% Twenty-Three standard test functions
        fitness_new(j)=fobj(newX_dec(j,:));
-   
+       end
 %         fitness_new(j) = feval(fobj,newX_dec(j,:));
         % 择优
         if fitness_new(j)  < fitness(j)

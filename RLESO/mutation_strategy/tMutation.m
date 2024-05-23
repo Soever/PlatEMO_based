@@ -5,6 +5,5 @@ function newX_dec= tMutation(X_dec,df)
         t_randoms = trnd(df, 1);
         newX_dec(i,:) = X_dec(i,:) .* (1 + t_randoms);
     end   
-     
 end
 
