@@ -5,7 +5,7 @@ N=50;
 
 
 
-Function_name='F2';
+Function_name='F3';
 [lb,ub,dim,fobj]=Get_Functions_details(Function_name);
 
 results1= zeros(runs);
@@ -16,7 +16,7 @@ results2= zeros(runs);
 %[Xfood, fval22,Convergence_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj); 
 % [Xfood, fval22,Convergence_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj); 
 %[Best_pos,Best_score,SO_curve]=RLSO_FitnessDiversityGrid(N,T,lb,ub,dim,fobj); 
-   [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=RLSO2_11(N,T,lb,ub,dim,fobj);
+   [Xfood, fval22,Convergence_curve]=RLSO2_14(N,T,lb,ub,dim,fobj);
      % [Xfood, fval22,Convergence_curve,~,~, ~,fitness_history1]=SO_operator_compare(N,T,lb,ub,dim,fobj,1);
      % [Xfood, fval22,Convergence_curve,~,~, ~,fitness_history2]=SO_operator_compare(N,T,lb,ub,dim,fobj,2);
      % [Xfood, fval22,Convergence_curve,~,~, ~,fitness_history3]=SO_operator_compare(N,T,lb,ub,dim,fobj,3);
@@ -33,12 +33,12 @@ results2= zeros(runs);
 % semilogy(min(fitness_history,[],1),'Color','r','linewidth',1.5)
 % legend("1","2","3","4","SO");
 % plot(min(fitness_history1,[],1)) ;
-% [Best_pos,Best_score,SO_curve]=RLSO2_random(N,T,lb,ub,dim,fobj);
+[Best_pos,Best_score,ESO_curve]=RLSO2_13(N,T,lb,ub,dim,fobj);
     % [Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=ESO(N,T,lb,ub,dim,fobj); 
 % [Best_pos,Best_score,SO_curve]=RLSO_FitnessDiversityGrid(N,T,lb,ub,dim,fobj); 
    %%
    [Best_pos,Best_score,SO_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj);
-   [Best_pos1,Best_score1,ESO_curve]=ESO_Algorithm(N,T,lb,ub,dim,fobj,[1,2,3,4]);
+   %[Best_pos1,Best_score1,ESO_curve]=ESO_Algorithm(N,T,lb,ub,dim,fobj,[1,2,3,4]);
    %[Best_pos1,Best_score1,ESO_curve,~,~]=RLSO2_1(N,T,lb,ub,dim,fobj);
  % [Best_pos,Best_score,SO_curve,~,~]=RLSO_2(N,T,lb,ub,dim,fobj);
  fig = figure;

@@ -2,9 +2,9 @@ clear all ;
 clc
 
 runs = 30 ;
-T = 500 ;
-N = 50 ;
-dim =100 ;%n==10||n==30||n==50||n==100)
+T = 10000 ;
+N = 100 ;
+dim =30 ;%n==10||n==30||n==50||n==100)
 function_num = 30;
 
 fval1 = zeros(runs,function_num) ;
@@ -23,9 +23,9 @@ for i=1:function_num
     
    parfor run=1:runs
         [Xfood1, fval1(run,i),~]=SO_Algorithm(N,T,lb,ub,dim,fobj); 
-        [Xfood2, fval2(run,i),~,~,~, ~]=RLSO2_11(N,T,lb,ub,dim,fobj); 
-        [Xfood3, fval3(run,i),~,~,~, ~]=RLSO2_1(N,T,lb,ub,dim,fobj); 
-        [Xfood4, fval4(run,i),~,~,~, ~]=ESO_Algorithm(N,T,lb,ub,dim,fobj,[1,2,3,4]);
+        [Xfood2, fval2(run,i),~]=RLSO2_12(N,T,lb,ub,dim,fobj); 
+        [Xfood3, fval3(run,i),~]=RLSO2_13(N,T,lb,ub,dim,fobj); 
+        %[Xfood4, fval4(run,i),~]=ESO_Algorithm(N,T,lb,ub,dim,fobj,[1,2,3,4]);
     end
     
 end
