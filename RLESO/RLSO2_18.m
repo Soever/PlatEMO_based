@@ -24,7 +24,7 @@ end
 
 %% X=initializationNew(N,dim,ub,lb,fobj);
 X=lb+rand(N,dim)*(ub-lb);%eq.(1)
-fitness=zeros(1,N);
+fitness=zeros(1,N); 
 for i=1:N
        fitness(i)=fobj(X(i,:));
 end
@@ -93,7 +93,7 @@ for t = 1:T
         Xbest_m = TempXm;
         Xm(index(1),:) = TempXm;
     end
-    
+
     TempXf =ConvexLensImaging(kk,Xbest_f,ub,ub1,lb,lb1);
 
     fitTemp = fobj(TempXf);
@@ -128,7 +128,7 @@ for t = 1:T
      [~, index]=sort(fitness_m);
      [~, index1]= sort(fitness_f);%排序
      
-     for i = 0:round(Nm/10)
+     for i = 0:round(N/10)
         newXm_dec(index(end-i),:)=lb+rand*(ub-lb);
         newXf_dec(index1(end-i),:)=lb+rand*(ub-lb);
      end

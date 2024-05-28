@@ -2,7 +2,7 @@
 % state >mean(fitness),kean(decs)
 % action so的四个策略 （都执行择优）
 % reward 
-function [Xfood,fval,gbest_t] = RLSO2_17(N,T,lb,ub,dim,fobj)
+function [Xfood,fval,gbest_t] = RLSO2_19(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -85,14 +85,16 @@ for t = 1:T
      [~, index]=sort(fitness_m);
      [~, index1]= sort(fitness_f);%排序
     
-    TempXm = FastRandomOBL(Xbest_m,lb1,ub1);
+    kk = 10*(1-2*(t/T)^2);
+    TempXm = ConvexLensImaging(kk,Xbest_m,ub,ub1,lb,lb1);
     fitTemp = fobj(TempXm);
     if(fitTemp<GYbest)
         fitnessBest_m=fitTemp ;
         Xbest_m = TempXm;
         Xm(index(1),:) = TempXm;
     end
-    TempXf = FastRandomOBL(Xbest_f,lb1,ub1);
+    
+    TempXf =ConvexLensImaging(kk,Xbest_f,ub,ub1,lb,lb1);
 
     fitTemp = fobj(TempXf);
     if(fitTemp<GYbest)
@@ -104,10 +106,13 @@ for t = 1:T
         if action_m(i)==1
              newXm_dec(i,:) = exploration_NoFood(Xm(i,:),fitness_m(i),C2(1,t),lb,ub);
         elseif action_m(i)==2
+            Temp = 4*rand()*(1-rand());
              newXm_dec(i,:) = exploit_Food(Xm(i,:),Xfood,Temp,C3(1,t));
         elseif action_m(i)==3 
+            Q = 4*rand()*(1-rand()) ;
             newXm_dec(i,:) = so_fight(Xm(i,:),fitness_m(i),Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
         else
+            Q = 4*rand()*(1-rand()) ;
             [newXm_dec_, ~] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
             newXm_dec(i,:) = newXm_dec_;
         end

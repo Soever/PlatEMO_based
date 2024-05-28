@@ -5,7 +5,7 @@ N=100;
 
 
 
-Function_name='F20';
+Function_name='F19';
 [lb,ub,dim,fobj]=Get_Functions_details(Function_name);
 
 results1= zeros(runs);
@@ -17,7 +17,7 @@ results2= zeros(runs);
 % [Xfood, fval22,Convergence_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj); 
 %[Best_pos,Best_score,SO_curve]=RLSO_FitnessDiversityGrid(N,T,lb,ub,dim,fobj); 
    %[Xfood, fval22,Convergence_curve,Trajectories,fitness_history, position_history]=RLSO2_11(N,T,lb,ub,dim,fobj);
-   [Xfood, fval22,Convergence_curve]=RLSO2_14(N,T,lb,ub,dim,fobj);
+   [Xfood, fval22,Convergence_curve]=RLSO5_1(N,T,lb,ub,dim,fobj);
      % [Xfood, fval22,Convergence_curve,~,~, ~,fitness_history1]=SO_operator_compare(N,T,lb,ub,dim,fobj,1);
      % [Xfood, fval22,Convergence_curve,~,~, ~,fitness_history2]=SO_operator_compare(N,T,lb,ub,dim,fobj,2);
      % [Xfood, fval22,Convergence_curve,~,~, ~,fitness_history3]=SO_operator_compare(N,T,lb,ub,dim,fobj,3);
@@ -42,7 +42,7 @@ results2= zeros(runs);
    %[Best_pos,Best_score,SO_curve]=SO_Algorithm(N,T,lb,ub,dim,fobj);
    [Best_pos1,Best_score1,ESO_curve]=ESO_AlgorithmFE(N,T/2,lb,ub,dim,fobj,[1,2,3,4]);
   % [Best_pos1,Best_score1,ESO_curve,~,~]=RLSO2_15(N,T,lb,ub,dim,fobj);
-   [Best_pos1,Best_score1,SO_curve]=RLSO2_16(N,T,lb,ub,dim,fobj);
+   [Best_pos1,Best_score1,SO_curve]=RLSO2_18(N,T,lb,ub,dim,fobj);
  % [Best_pos,Best_score,SO_curve,~,~]=RLSO_2(N,T,lb,ub,dim,fobj);
  fig = figure;
 
