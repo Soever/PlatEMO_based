@@ -2,7 +2,7 @@
 % state >mean(fitness),kean(decs)
 % action so的四个策略 （都执行择优）
 % reward 
-function [Xfood,fval,gbest_t] = RLSO2_13(N,T,lb,ub,dim,fobj)
+function [Xfood,fval,gbest_t] = RLSO2_19(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -81,14 +81,38 @@ for t = 1:T
     
     newXm_dec = zeros(size(Xm));
     newXf_dec = zeros(size(Xf));
+
+     [~, index]=sort(fitness_m);
+     [~, index1]= sort(fitness_f);%排序
+    
+    kk = 10*(1-2*(t/T)^2);
+    TempXm = ConvexLensImaging(kk,Xbest_m,ub,ub1,lb,lb1);
+    fitTemp = fobj(TempXm);
+    if(fitTemp<GYbest)
+        fitnessBest_m=fitTemp ;
+        Xbest_m = TempXm;
+        Xm(index(1),:) = TempXm;
+    end
+    
+    TempXf =ConvexLensImaging(kk,Xbest_f,ub,ub1,lb,lb1);
+
+    fitTemp = fobj(TempXf);
+    if(fitTemp<GYbest)
+        fitnessBest_f=fitTemp ;
+        Xbest_f = TempXf;
+         Xf(index1(1),:) = TempXf;
+    end
     for i = 1: Nm
         if action_m(i)==1
              newXm_dec(i,:) = exploration_NoFood(Xm(i,:),fitness_m(i),C2(1,t),lb,ub);
         elseif action_m(i)==2
+            Temp = 4*rand()*(1-rand());
              newXm_dec(i,:) = exploit_Food(Xm(i,:),Xfood,Temp,C3(1,t));
         elseif action_m(i)==3 
+            Q = 4*rand()*(1-rand()) ;
             newXm_dec(i,:) = so_fight(Xm(i,:),fitness_m(i),Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
         else
+            Q = 4*rand()*(1-rand()) ;
             [newXm_dec_, ~] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
             newXm_dec(i,:) = newXm_dec_;
         end
@@ -104,16 +128,24 @@ for t = 1:T
             [~, newXf_dec(i,:)] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
         end
     end
+     [~, index]=sort(fitness_m);
+     [~, index1]= sort(fitness_f);%排序
+     
+     for i = 0:round(N/10)
+        newXm_dec(index(end-i),:)=lb+rand*(ub-lb);
+        newXf_dec(index1(end-i),:)=lb+rand*(ub-lb);
+     end
+     
     [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
     [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
     next_state_m = get_state_knn(Xm,fitness_m,k);
     next_state_f = get_state_knn(Xf,fitness_f,k);
-    for i =1:Nm
-        q_table_m = updataQtable(state_m(i,:),action_m(i),reward_m(i),next_state_m(i,:),q_table_m);
+    for i =1:Nm-round(N/10)
+        jm = index(i);jf = index1(i);
+        q_table_m = updataQtable(state_m(jm,:),action_m(jm),reward_m(jm),next_state_m(jm,:),q_table_m);
+        q_table_f = updataQtable(state_f(jf,:),action_f(jf),reward_f(jf),next_state_f(jf,:),q_table_f);
     end
-    for i =1:Nf
-        q_table_f = updataQtable(state_f(i,:),action_f(i),reward_f(i),next_state_f(i,:),q_table_f);
-    end
+    
     
 
     [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);

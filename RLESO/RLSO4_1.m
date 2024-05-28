@@ -2,7 +2,7 @@
 % state >mean(fitness),kean(decs)
 % action so的四个策略 （都执行择优）
 % reward 
-function [Xfood,fval,gbest_t] = RLSO2_13(N,T,lb,ub,dim,fobj)
+function [Xfood,fval,gbest_t] = RLSO4_1(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -73,7 +73,8 @@ for t = 1:T
         fitness_history(i,t)=fobj(Positions(i,:));
         
     end
-
+    [~,index] = max(fitness_history(:,t));
+    X_worst = Positions(index,:) ;
     state_m = get_state_knn(Xm,fitness_m,k);
     state_f = get_state_knn(Xf,fitness_f,k);
     action_m = get_action(q_table_m,state_m) ;
@@ -88,9 +89,11 @@ for t = 1:T
              newXm_dec(i,:) = exploit_Food(Xm(i,:),Xfood,Temp,C3(1,t));
         elseif action_m(i)==3 
             newXm_dec(i,:) = so_fight(Xm(i,:),fitness_m(i),Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
-        else
+        elseif action_m(i)==4
             [newXm_dec_, ~] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
             newXm_dec(i,:) = newXm_dec_;
+        else
+            newXm_dec(i,:) =best_worst_position(Xm(i,:),Xfood,X_worst,t1(1,t),C3(1,t),Q);
         end
     end
     for i = 1: Nf
@@ -100,8 +103,10 @@ for t = 1:T
              newXf_dec(i,:) = exploit_Food(Xf(i,:),Xfood,Temp,C3(1,t));
         elseif action_f(i)==3 
             newXf_dec(i,:) = so_fight(Xf(i,:),fitness_f(i),Xbest_m,fitnessBest_m,t1(1,t),C3(1,t),Q) ;
-        else
+        elseif action_f(i)==4
             [~, newXf_dec(i,:)] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
+        else
+             newXf_dec(i,:) =best_worst_position(Xf(i,:),Xfood,X_worst,t1(1,t),C3(1,t),Q);
         end
     end
     [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
