@@ -2,7 +2,7 @@
 % 雌种群so + ConvexLensImaging，雄种群RLSO
 
 
-function [Xfood,fval,gbest_t] = RLSO5_1(N,T,lb,ub,dim,fobj)
+function [Xfood,fval,gbest_t] = RLSO5_2(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -80,6 +80,14 @@ for t = 1:T
 
     [~, index]=sort(fitness_m);
     [~, index1]= sort(fitness_f);%排序
+    kk = 10*(1-2*(t/T)^2);
+    TempXm = ConvexLensImaging(kk,Xbest_m,ub,ub1,lb,lb1);
+    fitTemp = fobj(TempXm);
+    if(fitTemp<GYbest)
+        fitnessBest_m=fitTemp ;
+        Xbest_m = TempXm;
+        Xm(index(1),:) = TempXm;
+    end
     for i = 1: Nm
         if action_m(i)==1
              newXm_dec(i,:) = exploration_NoFood(Xm(i,:),fitness_m(i),C2(1,t),lb,ub);
@@ -92,13 +100,7 @@ for t = 1:T
             newXm_dec(i,:) = newXm_dec_;
         end
     end
-    kk = 10*(1-2*(t/T)^2);
-    TempXf = ConvexLensImaging(kk,Xbest_f,ub,ub1,lb,lb1);fitTemp = fobj(TempXf);
-    if(fitTemp<GYbest)
-        fitnessBest_f=fitTemp ;
-        Xbest_f = TempXf;
-         Xf(index1(1),:) = TempXf;
-    end
+    
     if Q<Threshold
         newXf_dec = exploration_NoFood(Xf,fitness_f,C2(1,t),lb,ub);
     else
@@ -163,8 +165,6 @@ function state = get_state_knn(X,fitness,k)
     popD  = sum(cal_diversity(X)) / (N*(DL+1e-160)) ;
     popF  = mean(F) ;
     % 种群丰富度可能=0 
-
-    
     if popD  == 0 
        RDs = zeros(size(D));
     else
