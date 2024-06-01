@@ -1,8 +1,8 @@
-%% RLSO2_8
-% state >mean(fitness),kean(decs)
-% action so的四个策略 （都执行择优）
-% reward 
-function [Xfood,fval,gbest_t] = RLSO2_18(N,T,lb,ub,dim,fobj)
+%% RLSO5_1
+% 雌种群so + random mirror，雄种群RLSO
+
+
+function [Xfood,fval,gbest_t] = RLSO5_1(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -24,9 +24,7 @@ end
 
 %% X=initializationNew(N,dim,ub,lb,fobj);
 X=lb+rand(N,dim)*(ub-lb);%eq.(1)
-
 fitness=zeros(1,N);
-
 for i=1:N
        fitness(i)=fobj(X(i,:));
 end
@@ -72,38 +70,16 @@ for t = 1:T
     for i=1:size(Positions,1)
         position_history(i,t,:)=Positions(i,:);
         Trajectories(:,t)=Positions(:,1);
-        fitness_history(i,t)=fobj(Positions(i,:));
-        
+        fitness_history(i,t)=fobj(Positions(i,:));  
     end
-
+    [~,index] = max(fitness_history(:,t));
+    X_worst = Positions(index,:) ;
     state_m = get_state_knn(Xm,fitness_m,k);
-    state_f = get_state_knn(Xf,fitness_f,k);
     action_m = get_action(q_table_m,state_m) ;
-    action_f = get_action(q_table_f,state_f) ;
-    
     newXm_dec = zeros(size(Xm));
-    newXf_dec = zeros(size(Xf));
 
-     [~, index]=sort(fitness_m);
-     [~, index1]= sort(fitness_f);%排序
-    
-    kk = 10*(1-2*(t/T)^2);
-    TempXm = ConvexLensImaging(kk,Xbest_m,ub,ub1,lb,lb1);
-    fitTemp = fobj(TempXm);
-    if(fitTemp<GYbest)
-        fitnessBest_m=fitTemp ;
-        Xbest_m = TempXm;
-        Xm(index(1),:) = TempXm;
-    end
-
-    TempXf =ConvexLensImaging(kk,Xbest_f,ub,ub1,lb,lb1);
-
-    fitTemp = fobj(TempXf);
-    if(fitTemp<GYbest)
-        fitnessBest_f=fitTemp ;
-        Xbest_f = TempXf;
-         Xf(index1(1),:) = TempXf;
-    end
+    [~, index]=sort(fitness_m);
+    [~, index1]= sort(fitness_f);%排序
     for i = 1: Nm
         if action_m(i)==1
              newXm_dec(i,:) = exploration_NoFood(Xm(i,:),fitness_m(i),C2(1,t),lb,ub);
@@ -116,36 +92,38 @@ for t = 1:T
             newXm_dec(i,:) = newXm_dec_;
         end
     end
-    for i = 1: Nf
-        if action_f(i)==1
-             newXf_dec(i,:) = exploration_NoFood(Xf(i,:),fitness_f(i),C2(1,t),lb,ub);
-        elseif action_f(i)==2
-             newXf_dec(i,:) = exploit_Food(Xf(i,:),Xfood,Temp,C3(1,t));
-        elseif action_f(i)==3 
-            newXf_dec(i,:) = so_fight(Xf(i,:),fitness_f(i),Xbest_m,fitnessBest_m,t1(1,t),C3(1,t),Q) ;
+    kk = 10*(1-2*(t/T)^2);
+    TempXf = ConvexLensImaging(kk,Xbest_f,ub,ub1,lb,lb1);fitTemp = fobj(TempXf);
+    if(fitTemp<GYbest)
+        fitnessBest_f=fitTemp ;
+        Xbest_f = TempXf;
+         Xf(index1(1),:) = TempXf;
+    end
+    if Q<Threshold
+        newXf_dec = exploration_NoFood(Xf,fitness_f,C2(1,t),lb,ub);
+    else
+        if Temp>Thresold2
+            newXf_dec = exploit_Food(Xf,Xfood,Temp,C3(1,t));
         else
-            [~, newXf_dec(i,:)] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
+            if rand > 0.6
+                newXf_dec = so_fight(Xf,fitness_f,Xbest_m,fitnessBest_m,t1(1,t),C3(1,t),Q) ;
+            else
+                [~, newXf_dec] = so_mating(Xm,Xf,fitness_m,fitness_f,C3(1,t),Q,lb,ub);
+            end
         end
     end
-     [~, index]=sort(fitness_m);
-     [~, index1]= sort(fitness_f);%排序
-
-     for i = 0:round(Nm/10)
+    for i = 0:round(Nf/10)
         newXm_dec(index(end-i),:)=lb+rand*(ub-lb);
         newXf_dec(index1(end-i),:)=lb+rand*(ub-lb);
      end
-     
     [Xm,fitness_m,reward_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj);
-    [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
+    [Xf,fitness_f,~] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
     next_state_m = get_state_knn(Xm,fitness_m,k);
-    next_state_f = get_state_knn(Xf,fitness_f,k);
-    for i =1:Nm-round(Nm/10)
-        jm = index(i);jf = index1(i);
-        q_table_m = updataQtable(state_m(jm,:),action_m(jm),reward_m(jm),next_state_m(jm,:),q_table_m);
-        q_table_f = updataQtable(state_f(jf,:),action_f(jf),reward_f(jf),next_state_f(jf,:),q_table_f);
+
+    for i =1:Nm
+        q_table_m = updataQtable(state_m(i,:),action_m(i),reward_m(i),next_state_m(i,:),q_table_m);
     end
-    
-    
+
 
     [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);
     gbest_t(1,t) = GYbest ;

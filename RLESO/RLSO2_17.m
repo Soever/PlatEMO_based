@@ -85,14 +85,18 @@ for t = 1:T
      [~, index]=sort(fitness_m);
      [~, index1]= sort(fitness_f);%排序
     
+
     TempXm = FastRandomOBL(Xbest_m,lb2,ub2);
+
     fitTemp = fobj(TempXm);
     if(fitTemp<GYbest)
         fitnessBest_m=fitTemp ;
         Xbest_m = TempXm;
         Xm(index(1),:) = TempXm;
     end
+
     TempXf = FastRandomOBL(Xbest_f,lb2,ub2);
+
 
     fitTemp = fobj(TempXf);
     if(fitTemp<GYbest)

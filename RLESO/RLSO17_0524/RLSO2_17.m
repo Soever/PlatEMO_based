@@ -2,7 +2,7 @@
 % state >mean(fitness),kean(decs)
 % action so的四个策略 （都执行择优）
 % reward 
-function [Xfood,fval,gbest_t] = RLSO2_18(N,T,lb,ub,dim,fobj)
+function [Xfood,fval,gbest_t] = RLSO2_17(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -24,9 +24,7 @@ end
 
 %% X=initializationNew(N,dim,ub,lb,fobj);
 X=lb+rand(N,dim)*(ub-lb);%eq.(1)
-
 fitness=zeros(1,N);
-
 for i=1:N
        fitness(i)=fobj(X(i,:));
 end
@@ -87,16 +85,14 @@ for t = 1:T
      [~, index]=sort(fitness_m);
      [~, index1]= sort(fitness_f);%排序
     
-    kk = 10*(1-2*(t/T)^2);
-    TempXm = ConvexLensImaging(kk,Xbest_m,ub,ub1,lb,lb1);
+    TempXm = FastRandomOBL(Xbest_m,lb1,ub1);
     fitTemp = fobj(TempXm);
     if(fitTemp<GYbest)
         fitnessBest_m=fitTemp ;
         Xbest_m = TempXm;
         Xm(index(1),:) = TempXm;
     end
-
-    TempXf =ConvexLensImaging(kk,Xbest_f,ub,ub1,lb,lb1);
+    TempXf = FastRandomOBL(Xbest_f,lb1,ub1);
 
     fitTemp = fobj(TempXf);
     if(fitTemp<GYbest)
@@ -129,7 +125,7 @@ for t = 1:T
     end
      [~, index]=sort(fitness_m);
      [~, index1]= sort(fitness_f);%排序
-
+     
      for i = 0:round(Nm/10)
         newXm_dec(index(end-i),:)=lb+rand*(ub-lb);
         newXf_dec(index1(end-i),:)=lb+rand*(ub-lb);

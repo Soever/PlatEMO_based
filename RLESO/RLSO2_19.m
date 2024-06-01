@@ -131,7 +131,8 @@ for t = 1:T
      [~, index]=sort(fitness_m);
      [~, index1]= sort(fitness_f);%排序
      
-     for i = 0:round(N/10)
+
+     for i = 0:round(Nm/10)
         newXm_dec(index(end-i),:)=lb+rand*(ub-lb);
         newXf_dec(index1(end-i),:)=lb+rand*(ub-lb);
      end
@@ -140,7 +141,8 @@ for t = 1:T
     [Xf,fitness_f,reward_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj);
     next_state_m = get_state_knn(Xm,fitness_m,k);
     next_state_f = get_state_knn(Xf,fitness_f,k);
-    for i =1:Nm-round(N/10)
+
+    for i =1:Nm-round(Nm/10)
         jm = index(i);jf = index1(i);
         q_table_m = updataQtable(state_m(jm,:),action_m(jm),reward_m(jm),next_state_m(jm,:),q_table_m);
         q_table_f = updataQtable(state_f(jf,:),action_f(jf),reward_f(jf),next_state_f(jf,:),q_table_f);
