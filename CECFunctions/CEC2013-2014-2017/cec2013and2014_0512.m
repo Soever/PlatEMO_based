@@ -1,7 +1,7 @@
 
 clc
 clear all ;
-runs =20;
+runs =30;
 T =3000;
 N =100;
 dim =30 ;
@@ -61,7 +61,7 @@ for i=1:function_num
     
    parfor run=1:runs
        % [Xfood1, fval1(run,i),~,~,~]=ESO_Algorithm(N,T/2,lb,ub,dim,fobj,[1,2,3,4]); 
-        [Xfood2, fval2(run,i),~]=RLSO2_19(N,T,lb,ub,dim,fobj); 
+        [Xfood2, fval2(run,i),~]=RLSO5_1(N,T,lb,ub,dim,fobj); 
         %[Xfood3, fval3(run,i),~]=RLSO2_18(N,T,lb,ub,dim,fobj); 
        % [Xfood4, fval4(run,i),~]=RLSO2_16(N,T,lb,ub,dim,fobj); 
     end
