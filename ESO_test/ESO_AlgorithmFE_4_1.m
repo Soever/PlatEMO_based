@@ -1,5 +1,5 @@
 
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = ESO_AlgorithmFE(N,T,lb,ub,dim,fobj,stage)
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = ESO_AlgorithmFE_4_1(N,T,lb,ub,dim,fobj,stage)
 
 
 %% initial
@@ -199,7 +199,7 @@ for t = 1:T
     if any(stage== 4)
          avgF = mean(fitness_m);
          for j = 1:Nm
-            if(fitness_m(j) < avgF)
+           
                 %% Cauchy mutation
                 Temp = Xm(j,:).*(1 + tan(pi*(rand-0.5)));%eq.(28)
                 %% Return back the search agents that go beyond the boundaries of the search space
@@ -210,26 +210,12 @@ for t = 1:T
                     fitness_m(j)= ftemp;
                     Xm(j,:) = Temp;
                 end
-            else
-                %% Tent-chaos
-                TentZ0 = rand;
-                TentValue =mod(2*TentZ0,1)+rand/(Nm*dim);%eq.(25)
-                newX=min(Xm)+(max(Xm)-min(Xm))*TentValue;
-                Temp = (Xm(j,:)+newX)./2;
-                ftemp = fobj(Temp);
-                %% Return back the search agents that go beyond the boundaries of the search space
-                Temp(Temp>ub) = ub2(Temp>ub);
-                Temp(Temp<lb) = lb2(Temp<lb);
-                if(ftemp<fitness_m(j))
-                    fitness_m(j) = ftemp;
-                    Xm(j,:) = Temp;
-                end
-            end
+            
         end
 
      avgF = mean(fitness_f);
     for j = 1:Nf
-        if(fitness_f(j) < avgF)
+       
             %% Cauchy mutation
             Temp = Xf(j,:).*(1 + tan(pi*(rand-0.5))); %eq.(28)
             %% Return back the search agents that go beyond the boundaries of the search space
@@ -240,22 +226,8 @@ for t = 1:T
                 fitness_f(j) = ftemp;
                 Xf(j,:) = Temp;
             end
-        else
-            %% Tent-chaos
-            TentZ0 = rand;
-            TentValue =mod(2*TentZ0,1)+rand/(Nm*dim); %eq.(25)
-            newX=min(Xf)+(max(Xf)-min(Xf))*TentValue;
-            Temp = (Xf(j,:)+newX)./2;
-            ftemp = fobj(Temp);
-            %% Return back the search agents that go beyond the boundaries of the search space
-            Temp(Temp>ub) = ub2(Temp>ub);
-            Temp(Temp<lb) = lb2(Temp<lb);
-            if(ftemp<fitness_f(j))
-                fitness_f(j) = ftemp;
-                Xf(j,:) = Temp;
-            end
-        end
-    end
+        
+    
     end
    
         [Ybest1,gbest1] = min(fitness_m);
