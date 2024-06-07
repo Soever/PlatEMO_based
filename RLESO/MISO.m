@@ -25,7 +25,7 @@ X_out = [];
 fitness_out=[];
 failure_times_m = zeros(Nm,1) ;
 failure_times_f = zeros(Nf,1) ;
-maxFailure_times = 10 ;
+maxFailure_times = 5 ;
 [fitnessBest_m, gbest1] = min(fitness_m);
 Xbest_m = Xm(gbest1,:);
 [fitnessBest_f, gbest2] = min(fitness_f);
@@ -34,9 +34,11 @@ for t = 1:T
   Temp=exp(-((t)/T));  %eq.(4)
   Q=C1*exp(((t-T)/(T)));%eq.(5)
 
+   
+
   indices = find(failure_times_m >= maxFailure_times);
   indices1 = find(failure_times_f >= maxFailure_times);
-  if length(indices>1) || length(indices1>1)
+  if ~isempty(indices) || ~isempty(indices1)
       if isempty(fitness_out)
             X_out=[Xm(indices,:);Xf(indices1, :)] ;
             fitness_out=[fitness_m(indices),fitness_f(indices1)];
@@ -72,13 +74,20 @@ for t = 1:T
             y = feval(fobj,tempXm(1,:));
             fitness_m(indices(i))=y;
             Xm(indices(i),:)= tempXm;
+            disp("maxFailure");
       end
+      F = (mF - 0.1) + (0.2) * rand();
       for i = 1:length(indices1)
             r =  randperm(size(xall,1), 2) ;
             x_selected = xall(r,:);
             randp = randi([1, p]) ;
-            tempXf(i,:) =  xpbest(randp,:)+F*(x_selected(1,:)-x_selected(2,:));
-    % 生成均匀分布的随机变量F
+            tempXf(1,:) =  xpbest(randp,:)+F*(x_selected(1,:)-x_selected(2,:));
+            Flag4ub=tempXf(1,:)>ub;
+            Flag4lb=tempXf(1,:)<lb;
+            tempXf(1,:)=(tempXf(1,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
+            y = feval(fobj,tempXf(1,:));
+            fitness_f(indices1(i))=y;
+            Xf(indices1(i),:)= tempXf;
       end
   end
     if Q>1        Q=1;    end
@@ -106,7 +115,6 @@ if Q<Threshold
     end
 else %Exploitation Phase (Food Exists)
     if Temp>Thresold2  %hot
-
         for i=1:Nm
             flag_index = floor(2*rand()+1);
             Flag=vec_flag(flag_index);
@@ -206,12 +214,13 @@ end
         fitnessBest_f=Ybest2;
         
     end
+
     if Ybest1<Ybest2
         gbest_t(t)=min(Ybest1);
     else
         gbest_t(t)=min(Ybest2);
-        
     end
+    
     if fitnessBest_m<fitnessBest_f
         GYbest=fitnessBest_m;
         Xfood=Xbest_m;
