@@ -1,8 +1,7 @@
-%% RLSO5_1
-% 雌种群so + ConvexLensImaging，雄种群RLSO
+% tmutation
 
 
-function [Xfood,fval,gbest_t] = RLSO5_3(N,T,lb,ub,dim,fobj)
+function [Xfood,fval,gbest_t] = RLSO5_7(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -45,21 +44,21 @@ fitness_m=fitness(1:Nm);fitness_f=fitness(Nm+1:N);
 k = N/10 ;
 
 
-RF_num = 5 ;RD_num =5;strategy_num = 4 ;
+RF_num = 5 ;RD_num =5;strategy_num = 6;
 q_table_m = zeros(RF_num,RD_num,strategy_num);
 X_out = [];
 fitness_out=[];
 failure_times_m = zeros(Nm,1) ;
 failure_times_f = zeros(Nf,1) ;
 maxFailure_times = 10;
-
+xall = [] ;
 
 %% Main loop
 for t = 1:T
 
     Temp=exp(-((t)/T));  %eq.(4)
     Q=C1(1,t)*exp(((t-T)/(T)));%eq.(5)
-    
+   
   indices = find(failure_times_m >= maxFailure_times);
   indices1 = find(failure_times_f >= maxFailure_times);
   if ~isempty(indices) || ~isempty(indices1)
@@ -79,43 +78,19 @@ for t = 1:T
             fitness_out = fitness_out(1:N);
       end
       
-      mF_max = 0.9 ;mF_min= 0.1 ;
+      
+      
+      
+      
+  end
+  mF_max = 0.9 ;mF_min= 0.1 ;
       mF = mF_max - (mF_max - mF_min) * (t / T);
       F = (mF - 0.1) + (0.2) * rand(); % 其中rand()生成[0,1]之间的均匀随机数
       p = round(0.05* length(fitness_out)); if p < 1 ; p=1 ;end 
-        xall=  [X_out;Xm;Xf] ;
-        fitnesspbest = [fitness_out,fitness_m,fitness_f];
+    xall=  [X_out;Xm;Xf] ;
+      fitnesspbest = [fitness_out,fitness_m,fitness_f];
       [~, pIndex] = sort(fitnesspbest);
       xpbest = xall(pIndex(1:p),:) ;
-      
-      for i = 1:length(indices)
-            r =  randperm(size(xall,1), 2) ;
-            x_selected = xall(r,:);
-            randp = randi([1, p]) ;
-            tempXm =  xpbest(randp,:)+F*(x_selected(1,:)-x_selected(2,:));
-            Flag4ub=tempXm(1,:)>ub;
-            Flag4lb=tempXm(1,:)<lb;
-            tempXm(1,:)=(tempXm(1,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
-            y = feval(fobj,tempXm(1,:));
-            fitness_m(indices(i))=y;
-            Xm(indices(i),:)= tempXm;
-      end
-      for i = 1:length(indices1)
-            r =  randperm(size(xall,1), 2) ;
-            x_selected = xall(r,:);
-            randp = randi([1, p]) ;
-            tempXf(1,:) =  xpbest(randp,:)+F*(x_selected(1,:)-x_selected(2,:));
-            Flag4ub=tempXf(1,:)>ub;
-            Flag4lb=tempXf(1,:)<lb;
-            tempXf(1,:)=(tempXf(1,:).*(~(Flag4ub+Flag4lb)))+ub.*Flag4ub+lb.*Flag4lb;
-            y = feval(fobj,tempXf(1,:));
-            fitness_f(indices1(i))=y;
-            Xf(indices1(i),:)= tempXf;
-            
-    % 生成均匀分布的随机变量F
-      end
-  end
-
 
 
 
@@ -128,16 +103,24 @@ for t = 1:T
 
 
     for i = 1: Nm
-        if
-        if action_m(i)==1
-             newXm_dec(i,:) = ind_exploration_NoFood(Xm,fitness_m,fitness_m(i),C2(1,t),lb,ub);
-        elseif action_m(i)==2
-             newXm_dec(i,:) = exploit_Food(Xm(i,:),Xfood,Temp,C3(1,t));
-        elseif action_m(i)==3 
-            newXm_dec(i,:) = so_fight(Xm(i,:),fitness_m(i),Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
-        else
-            [newXm_dec_, ~] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
-            newXm_dec(i,:) = newXm_dec_;
+        if ~ismember(i,indices) 
+            if action_m(i)==1
+                 newXm_dec(i,:) = ind_exploration_NoFood(Xm,fitness_m,fitness_m(i),C2(1,t),lb,ub);
+            elseif action_m(i)==2
+                 newXm_dec(i,:) = exploit_Food(Xm(i,:),Xfood,Temp,C3(1,t));
+            elseif action_m(i)==3 
+                newXm_dec(i,:) = so_fight(Xm(i,:),fitness_m(i),Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
+            elseif action_m(i)==4
+                [newXm_dec_, ~] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
+                newXm_dec(i,:) = newXm_dec_;
+            elseif action_m(i)==5
+                newXm_dec(i,:) = tMutation(Xm(i,:),t); 
+            elseif action_m(i)==6
+                r =  randperm(size(xall,1), 2) ;
+                x_selected = xall(r,:);
+                randp = randi([1, p]) ;
+                newXm_dec(i,:) =  xpbest(randp,:)+F*(x_selected(1,:)-x_selected(2,:));
+            end
         end
     end
     
@@ -161,10 +144,12 @@ for t = 1:T
     [Xm,fitness_m,reward_m,failure_times_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj,failure_times_m);
     [Xf,fitness_f,~,failure_times_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj,failure_times_f);
     next_state_m = get_state_knn(Xm,fitness_m,k);
-
+    
     for i =1:Nm
         q_table_m = updataQtable(state_m(i,:),action_m(i),reward_m(i),next_state_m(i,:),q_table_m);
     end
+    
+    
 
 
     [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);

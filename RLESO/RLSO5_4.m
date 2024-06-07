@@ -2,7 +2,7 @@
 % 雌种群so + ConvexLensImaging，雄种群RLSO
 
 
-function [Xfood,fval,gbest_t] = RLSO5_3(N,T,lb,ub,dim,fobj)
+function [Xfood,fval,gbest_t] = RLSO5_4(N,T,lb,ub,dim,fobj)
 
 %% initial
 
@@ -128,16 +128,17 @@ for t = 1:T
 
 
     for i = 1: Nm
-        if
-        if action_m(i)==1
-             newXm_dec(i,:) = ind_exploration_NoFood(Xm,fitness_m,fitness_m(i),C2(1,t),lb,ub);
-        elseif action_m(i)==2
-             newXm_dec(i,:) = exploit_Food(Xm(i,:),Xfood,Temp,C3(1,t));
-        elseif action_m(i)==3 
-            newXm_dec(i,:) = so_fight(Xm(i,:),fitness_m(i),Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
-        else
-            [newXm_dec_, ~] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
-            newXm_dec(i,:) = newXm_dec_;
+        if ~ismember(i,indices) 
+            if action_m(i)==1
+                 newXm_dec(i,:) = ind_exploration_NoFood(Xm,fitness_m,fitness_m(i),C2(1,t),lb,ub);
+            elseif action_m(i)==2
+                 newXm_dec(i,:) = exploit_Food(Xm(i,:),Xfood,Temp,C3(1,t));
+            elseif action_m(i)==3 
+                newXm_dec(i,:) = so_fight(Xm(i,:),fitness_m(i),Xbest_f,fitnessBest_f,t1(1,t),C3(1,t),Q) ;
+            else
+                [newXm_dec_, ~] = so_mating(Xm(i,:),Xf(i,:),fitness_m(i),fitness_f(i),C3(1,t),Q,lb,ub);
+                newXm_dec(i,:) = newXm_dec_;
+            end
         end
     end
     
@@ -161,9 +162,34 @@ for t = 1:T
     [Xm,fitness_m,reward_m,failure_times_m] = Evaluation_reward(Xm,newXm_dec,fitness_m,lb,ub,fobj,failure_times_m);
     [Xf,fitness_f,~,failure_times_f] = Evaluation_reward(Xf,newXf_dec,fitness_f,lb,ub,fobj,failure_times_f);
     next_state_m = get_state_knn(Xm,fitness_m,k);
-
+    
     for i =1:Nm
         q_table_m = updataQtable(state_m(i,:),action_m(i),reward_m(i),next_state_m(i,:),q_table_m);
+    end
+    
+    for j = 1:Nm
+            %% Cauchy mutation
+            Temp = Xm(j,:).*(1 + tan(pi*(rand-0.5))); %eq.(28)
+            %% Return back the search agents that go beyond the boundaries of the search space
+            Temp(Temp>ub) = ub2(Temp>ub);
+            Temp(Temp<lb) = lb2(Temp<lb);
+            ftemp = fobj(Temp);
+            if(ftemp<fitness_f(j))
+                fitness_f(j) = ftemp;
+                Xm(j,:) = Temp;
+            end
+    end
+    for j = 1:Nf
+            %% Cauchy mutation
+            Temp = Xf(j,:).*(1 + tan(pi*(rand-0.5))); %eq.(28)
+            %% Return back the search agents that go beyond the boundaries of the search space
+            Temp(Temp>ub) = ub2(Temp>ub);
+            Temp(Temp<lb) = lb2(Temp<lb);
+            ftemp = fobj(Temp);
+            if(ftemp<fitness_f(j))
+                fitness_f(j) = ftemp;
+                Xf(j,:) = Temp;
+            end
     end
 
 
