@@ -104,7 +104,7 @@ for t = 1:T
     end
     for i = 1: Nm
         if action_m(i)==1
-             newXm_dec(i,:) = exploration_NoFood(Xm(i,:),fitness_m(i),C2(1,t),lb,ub);
+             newXm_dec(i,:) = ind_exploration_NoFood(Xm,fitness_m,fitness_m(i),C2(1,t),lb,ub);
         elseif action_m(i)==2
             Temp = 4*rand()*(1-rand());
              newXm_dec(i,:) = exploit_Food(Xm(i,:),Xfood,Temp,C3(1,t));
@@ -119,7 +119,7 @@ for t = 1:T
     end
     for i = 1: Nf
         if action_f(i)==1
-             newXf_dec(i,:) = exploration_NoFood(Xf(i,:),fitness_f(i),C2(1,t),lb,ub);
+             newXf_dec(i,:) = ind_exploration_NoFood(Xf,fitness_f,fitness_f(i),C2(1,t),lb,ub);
         elseif action_f(i)==2
              newXf_dec(i,:) = exploit_Food(Xf(i,:),Xfood,Temp,C3(1,t));
         elseif action_f(i)==3 
