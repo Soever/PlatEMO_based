@@ -2,13 +2,13 @@
 % 雌种群so + ConvexLensImaging，雄种群RLSO
 
 
-function [Xfood,fval,gbest_t] = RLSO5_4(N,T,lb,ub,dim,fobj)
+function [Xfood,fval,gbest_t] = RLSO5_8(N,T,lb,ub,dim,fobj)
 
 %% initial
 
 Threshold=0.25;
 Thresold2= 0.6;
-C1=0.5*ones(1,T);
+C1=0.5*ones(1,T); 
 C2=0.05*ones(1,T);
 C3=2*ones(1,T);
 stage = [1,2,3,4] ;

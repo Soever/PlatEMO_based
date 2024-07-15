@@ -115,9 +115,6 @@ for t = 1:T
       end
   end
 
-
-
-
     state_m = get_state_knn(Xm,fitness_m,k);
     action_m = get_action(q_table_m,state_m) ;
     newXm_dec = zeros(size(Xm));
@@ -167,30 +164,7 @@ for t = 1:T
         q_table_m = updataQtable(state_m(i,:),action_m(i),reward_m(i),next_state_m(i,:),q_table_m);
     end
     
-    for j = 1:Nm
-            %% Cauchy mutation
-            Temp = tMutation(Xm(j,:),t); %eq.(28)
-            %% Return back the search agents that go beyond the boundaries of the search space
-            Temp(Temp>ub) = ub2(Temp>ub);
-            Temp(Temp<lb) = lb2(Temp<lb);
-            ftemp = fobj(Temp);
-            if(ftemp<fitness_f(j))
-                fitness_f(j) = ftemp;
-                Xm(j,:) = Temp;
-            end
-    end
-    for j = 1:Nf
-            %% Cauchy mutation
-            Temp =tMutation(Xf(j,:),t); %eq.(28)
-            %% Return back the search agents that go beyond the boundaries of the search space
-            Temp(Temp>ub) = ub2(Temp>ub);
-            Temp(Temp<lb) = lb2(Temp<lb);
-            ftemp = fobj(Temp);
-            if(ftemp<fitness_f(j))
-                fitness_f(j) = ftemp;
-                Xf(j,:) = Temp;
-            end
-    end
+
 
 
     [Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f,GYbest,Xfood] = updateXbest(Xm,Xf,fitness_m,fitness_f,Xbest_m,Xbest_f,fitnessBest_m,fitnessBest_f);

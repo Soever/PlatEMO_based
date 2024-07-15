@@ -195,18 +195,7 @@ switch F
         lb=-100*ones(1,dim);
         ub=100*ones(1,dim);
         fobj = @(x) cec13_func(x',28); 
-    case 29
-%         dim=10;
-        
-        lb=-100*ones(1,dim);
-        ub=100*ones(1,dim);
-        fobj = @(x) cec13_func(x',29); 
-    case 30
-%         dim=10;
-        
-        lb=-100*ones(1,dim);
-        ub=100*ones(1,dim);
-        fobj = @(x) cec13_func(x',30); 
+
         
 end
 
