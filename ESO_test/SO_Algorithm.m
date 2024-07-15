@@ -25,12 +25,14 @@ fitness_f=fitness(Nm+1:N);
 Xbest_m = Xm(gbest1,:);
 [fitnessBest_f, gbest2] = min(fitness_f);
 Xbest_f = Xf(gbest2,:);
+stage = zeros(1,T);
 for t = 1:T
     Temp=exp(-((t)/T));  %eq.(4)
   Q=C1*exp(((t-T)/(T)));%eq.(5)
     if Q>1        Q=1;    end
     % Exploration Phase (no Food)
 if Q<Threshold
+    stage(t) = 1;
     for i=1:Nm
         for j=1:1:dim
             rand_leader_index = floor(Nm*rand()+1);
@@ -53,6 +55,7 @@ if Q<Threshold
     end
 else %Exploitation Phase (Food Exists)
     if Temp>Thresold2  %hot
+        stage(t) = 2;
         for i=1:Nm
             flag_index = floor(2*rand()+1);
             Flag=vec_flag(flag_index);
@@ -69,6 +72,7 @@ else %Exploitation Phase (Food Exists)
         end
     else %cold
         if rand>0.6 %fight
+            stage(t) = 3;
             for i=1:Nm
                 for j=1:1:dim
                     FM=exp(-(fitnessBest_f)/(fitness_m(i)+eps));%eq.(13)
@@ -83,6 +87,7 @@ else %Exploitation Phase (Food Exists)
                 end
             end
         else%mating
+            stage(t) = 4;
             for i=1:Nm
                 for j=1:1:dim
                     Mm=exp(-fitness_f(i)/(fitness_m(i)+eps));%eq.(17)
@@ -157,6 +162,7 @@ end
     
 end
 fval = GYbest;
+%scatter(1:T,stage);
 end
 
 

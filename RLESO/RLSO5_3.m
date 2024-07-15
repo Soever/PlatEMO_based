@@ -128,7 +128,7 @@ for t = 1:T
 
 
     for i = 1: Nm
-        if
+       
         if action_m(i)==1
              newXm_dec(i,:) = ind_exploration_NoFood(Xm,fitness_m,fitness_m(i),C2(1,t),lb,ub);
         elseif action_m(i)==2

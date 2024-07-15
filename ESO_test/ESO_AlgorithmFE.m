@@ -1,5 +1,5 @@
 
-function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = ESO_Algorithm(N,T,lb,ub,dim,fobj,stage)
+function [Xfood, fval,gbest_t,Trajectories,fitness_history, position_history] = ESO_AlgorithmFE(N,T,lb,ub,dim,fobj,stage)
 
 
 %% initial
@@ -71,6 +71,7 @@ for t = 1:T
             fitnessBest_m=fitTemp ;
             Xbest_m = TempXm;
             Xm(BestIndex1,:) = TempXm;
+            
         end
         TempXf = ConvexLensImaging(k,Xbest_f,ub,ub1,lb,lb1);
         fitTemp = fobj(TempXf);
